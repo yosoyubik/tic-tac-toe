@@ -10,7 +10,6 @@
     +|
     +=  state
       $:  tabla=table
-          last=?
           wom=(unit ship)
           soles=(map bone sole-share)
           tabla=table
@@ -21,15 +20,14 @@
     +=  card  $%  [%diff %sole-effect sole-effect]
                   [%wait wire p=@da]
                   [%peer wire dock path]
-               ==
-    +=  action  [%sub @t]
+              ==
+    +=  action  $%  [%sub @p]                      ::  subscribe to a game on @p
+                    [%disc ~]                      ::  disconnect from a game
+                ==
     +=  table   [%tan rows=(list row)]
     +=  row     [%leaf tape]
-    +=  outcome  $?  ~
-                     %wins
-                     %tie
-                 ==
-    +=  turno   [=player =spot]
+    +=  outcome  ?(%wins %tie ~)
+    +=  turno  [=player =spot]
     +=  player  ?(%x %o %$)
     +=  spot  [x=num y=num]
     +=  num  ?(%1 %2 %3)
@@ -39,7 +37,6 @@
     :>  constants, in their own chapter.
     +|
     ++  row-sep  leaf+" ---------"
-    ++  tabla-sep  leaf+"."
     ++  texto    txt+"¡hola terricola!"
     ++  claro    clr+~
     ++  tong     bel+~
@@ -63,14 +60,9 @@
   ~&  [%wake wir]
   [~ +>.$]
 ::
-:: ++  poke-atom
-::   |=  a=@
-::   ^-  (quip move _+>)
-::   ~&  [%new-move-atom a]
-::   [~ +>]
-:: ::
 ++  active-toer  (player-icon [~ toer])
-++  last-toer  (player-icon [~ ?:(=(toer %o) %x %o)])
+++  switch  ?:(=(toer %o) %x %o)
+++  last-toer  (player-icon [~ switch])
 ::
 ++  coup-noun
   |=  [wir=wire err=(unit tang)]
@@ -101,18 +93,9 @@
   =-  [(effect %mor pro+prompt -)]~
   [tabla ~]
 ::
-:: ++  peer
-::
 ++  poke-noun
   |=  act=*
   ^-  (quip move _+>)
-  ~&  [%actoooooooooooooooooo act]
-  [~ +>]
-::
-++  poke-txt
-  |=  act=(list @t)
-  ^-  (quip move _+>)
-  ~&  [%act-txt act]
   [~ +>]
 ::
 ++  min-gate
@@ -129,8 +112,8 @@
 ++  position  ;~((glue fas) indice indice)           :: [1-3]/[1-3]
 ::
 ++  spot-val
-|=  a=[@ @]
-?>(?=(spot a) a) :: If assertion is true, return the input. model validation
+  |=  a=[@ @]
+  ?>(?=(spot a) a) :: If assertion is true, return the input. model validation
 ::
 ++  poke-sole-action
   |=  act=sole-action
@@ -140,7 +123,6 @@
       $clr  [~ +>.$]                                           :: clear screen
       $ret                                                     :: enter
     ?:  =(~ buf.som)
-      :: ~&  [%ret som]
       :_  +>.$
       [(effect txt+"position for '{active-toer}' (e.g. 1/1)  ")]~
     =/  try  (rust (tufa buf.som) position)
@@ -150,17 +132,19 @@
     ?:  (~(has by board) spo)
       :_  +>.$
       [(effect txt+" Spot taken ")]~
-    =^  out  game  (step [toer spo])
-    =.  toer  ?:(=(toer %o) %x %o)         :: switch player
+    ~&  [%bef board]
+    =^  out  board  (step [toer spo])
+    ~&  [%taf board]
+    =.  toer  switch
     =.  tabla  [%tan (flop print-board)]
-    ?~  out                                :: game goes on
+    ?~  out                                                   :: game goes on
       :_  +>.$
       =-  [(effect %mor pro+prompt -)]~
       [tabla ~]
     =/  outcome  :-  %txt
     %+  weld  " End game:  "
     ?:(=(out %tie) "it's a tie" (weld last-toer " wins!"))
-    :_  +>.$(board *(map spot player))     :: cleaning up
+    :_  +>.$(board *(map spot player))                        :: cleaning up
     =-  [(effect %mor outcome -)]~
     [pro+prompt tabla ~]
       $det                                                    :: key press
@@ -202,54 +186,55 @@
   ?:  =(a "X")
     %x
   %$
+::
 ++  player-pos
-|=  [ro=@ co=@]  ^-  tape
-=+  player=(~(get by board) [ro co])
-(player-icon player)
+  |=  [ro=@ co=@]  ^-  tape
+  =+  player=(~(get by board) [ro co])
+  (player-icon player)
 ::
 ++  print-row
-|=  ro=@  ^-  row
-=/  co  1
-:-  %leaf
-%-  zing
-|-
-=/  player  (player-pos [ro co])
-?:  ?&(=(%4 co))
-  ~
-:-
-  ?:  ?&(=(co %1))
-    (weld (weld " " player) " ")
-  ?:  ?&(=(co %2))
-    (weld (weld "| " player) " ")
-  ?:  ?&(=(co %3))
-    (weld (weld "| " player) " ")
-  ~
-  $(co (add co 1))
+  |=  ro=@  ^-  row
+  =/  co  1
+  :-  %leaf
+  %-  zing
+  |-
+  =/  player  (player-pos [ro co])
+  ?:  ?&(=(%4 co))
+    ~
+  :-
+    ?:  ?&(=(co %1))
+      (weld (weld " " player) " ")
+    ?:  ?&(=(co %2))
+      (weld (weld "| " player) " ")
+    ?:  ?&(=(co %3))
+      (weld (weld "| " player) " ")
+    ~
+    $(co (add co 1))
 ::
 ++  print-board
-|-  ^-  (list row)
-=/  ro  1
-|-
-?:  =(ro 4)
-  [leaf+"" ~]
-?:  ?&(=(ro 3))
-  [(print-row ro) $(ro (add ro 1))]
-[(print-row ro) row-sep $(ro (add ro 1))]
-::
-++  game  .
+  |-  ^-  (list row)
+  =/  ro  1
+  |-
+  ?:  =(ro 4)
+    [leaf+"" ~]
+  ?:  ?&(=(ro 3))
+    [(print-row ro) $(ro (add ro 1))]
+  [(print-row ro) row-sep $(ro (add ro 1))]
 ::
 ++  step
   |=  turn=turno
-  ^-  [outcome _game]
+  ^-  [outcome (map spot player)]
   =.  board  (~(put by board) [spot.turn player.turn])
-  [outcome-check game(last !last)]
+  [outcome-check board]
+::
 ++  outcome-check
+  ^-  outcome
   ?:  win-check
     %wins
   ?:(tie-check %tie ~)
 ::
 ++  win-check
-  =/  who=player  ?:(last %x %o)
+  =/  who=player  toer
   %+  lien  winning-rows
   |=  a=(list spot)
   %+  levy  a
