@@ -6,7 +6,9 @@
 :: !:
 [. sole]
 =>  |%
+    :>  #
     :>  #  %model
+    :>  #
     +|
     +=  state
       $:  tabla=table
@@ -132,15 +134,12 @@
     ?:  (~(has by board) spo)
       :_  +>.$
       [(effect txt+" Spot taken ")]~
-    ~&  [%bef board]
     =^  out  board  (step [toer spo])
-    ~&  [%taf board]
     =.  toer  switch
     =.  tabla  [%tan (flop print-board)]
     ?~  out                                                   :: game goes on
       :_  +>.$
-      =-  [(effect %mor pro+prompt -)]~
-      [tabla ~]
+      =+  [tabla ~]  [(effect %mor pro+prompt -)]~
     =/  outcome  :-  %txt
     %+  weld  " End game:  "
     ?:(=(out %tie) "it's a tie" (weld last-toer " wins!"))
