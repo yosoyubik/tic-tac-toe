@@ -3,6 +3,14 @@
 This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www.youtube.com/watch?v=_acTt4_IXYM&t=225s), based on the [example](https://github.com/joshuareagan/doc-drafts/blob/master/Hoon-Ch2-10.md) written by Joshua Reagan (aka ~taglux-nidsep)
 
 ![Alt Text](zod.gif)
+## Docs
+
+We are basicailly modelling a state machine between two ships running the same
+app and the console (%sole).
+
+~zod
+             %sole
+~marzod
 
 ## Features
 

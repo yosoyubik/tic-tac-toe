@@ -17,11 +17,15 @@
           tabla=table
           board=(map spot player)
           toer=player
+          subs=?
+          game=opts
+          ship-toer=(unit @p)
       ==
     +=  move  (pair bone card)
     +=  card  $%  [%diff %sole-effect sole-effect]
                   [%wait wire p=@da]
                   [%peer wire dock path]
+                  [%diff %turno turno]
               ==
     +=  action  $%  [%sub @p]                      ::  subscribe to a game on @p
                     [%disc ~]                      ::  disconnect from a game
@@ -33,6 +37,7 @@
     +=  player  ?(%x %o %$)
     +=  spot  [x=num y=num]
     +=  num  ?(%1 %2 %3)
+    +=  opts  ?(%1 %2 %3 ~)
     :>  #
     :>  #  %constant
     :>  #
@@ -53,8 +58,13 @@
   :: TODO: "always reset state no matter what" is ++ prep `_.
   |=  *
   ^-  (quip move _+>)
-  ~&  [%starto1 tabla]
-  [~ +>.$(toer ?:(=(toer %x) %o %x))]
+  :-  ~
+  %=  +>.$
+    toer       ?:(=(toer %x) %o %x)
+    subs       |
+    game       ~
+    ship-toer  ~
+  ==
 ::
 ++  wake                                                ::>  kicked by timer
   |=  [wir=wire ~]
@@ -72,33 +82,124 @@
   ~&  [%error err]
   [~ +>]
 ::
-++  diff-sole
-  |=  [wir=wire dat=*]
-  ~&  [%got-data-sole wir dat]
+++  diff                                              :: FIXME
+  |=  [wir=wire data=*]                               :: Crashes the subscriber
+  ~&  wir
   [~ +>]
 ::
-++  diff-sole-effect
-  |=  [wir=wire dat=*]
-  ~&  [%got-data-sole-effect wir dat]
-  [~ +>]
+++  peer-start-game                                   :: A ship wants to play
+  |=  pax=path
+  ^-  (quip move _+>)
+  :: =/  som  (~(got by soles) ost.bol)               :: This crashes (??)
+  :: ~&   (~(got by soles) ost.bol)
+  ~&  source+[ship+src.bol ' subscribed to you on: ' path+pax]
+  :: After someone subscribed to us we send them update of the board
+  :: and updates to the console
+  =.  ship-toer  [~ src.bol]
+  :-  :~  %+  effect  %mor
+          :~  tabla
+              pro+prompt
+          ==
+      ==
+  +>.$
 ::
-++  prompt
+++  help
+  ^-  (list sole-effect)
+  =-  (scan - (more (just '\0a') (stag %txt (star prn))))
+  ?:  =(subs &)  "You are on!"
+  """
+
+  1 - invite ship to a game (e.g. 1: ~marzod)
+  2 - start lonely game     (e.g. 2: ~)
+  3 - start game and wait   (e.g. 3: ~)
+
+  """
+::
+++  prompt-init                                        :: game start prompt
   ^-  sole-prompt
-  [& %ask-ship " ['{active-toer}' ~] (row/col): "]
+  [& %$ " select one of the options (1-3) "]
 ::
-++  peer-sole
+++  prompt                                             :: game input prompt
+  ^-  sole-prompt
+  [& %$ " ['{active-toer}' '{?~(ship-toer ~ <u.ship-toer>)}'] (row/col): "]
+::
+++  peer-sole                                          :: sole subscribes to us
   |=  path
-  ~&  [%peer-sole-mio path]
   ^-  (quip move _+>)
   =.  tabla  [%tan (flop print-board)]
   :_  +>.$(soles (~(put by soles) ost.bol *sole-share))
-  =-  [(effect %mor pro+prompt -)]~
-  [tabla ~]
+  :~  %+  effect  %mor
+      :~  mor+help
+          tabla
+          pro+prompt-init
+      ==
+  ==
 ::
 ++  poke-noun
   |=  act=*
   ^-  (quip move _+>)
   [~ +>]
+::
+++  poke-sole-action
+  |=  act=sole-action
+  ^-  (quip move _+>)
+  =/  som  (~(got by soles) ost.bol)
+  ?-    -.act
+      $clr  [~ +>.$]                                           :: clear screen
+      $ret                                                     :: enter
+    ?:  ?&  =(~ buf.som)
+            =(~ game)
+        ==
+      :_  +>.$
+      [(effect txt+" game option not selected!  ")]~
+      =/  try  (rust (tufa buf.som) num-rule)
+      ?~  try
+        [~ +>.$]
+      ~&  u.try
+      ?:  =(u.try '1')
+        :: we subscribe to the ship (only ~zod now)
+        =.  game  %1
+        :_  +>.$
+          :~  :*
+              ost.bol
+              %peer
+              /subscribe
+              [~zod %toe]
+              /start-game
+          ==
+        ==
+      ?:  =(u.try '2')
+        =.  game  %2
+        [~ +>.$]
+      ?:  =(u.try '3')
+        =.  game  %3
+        [~ +>.$]
+      =.  game  ~
+      [~ +>.$]
+      ::  Game begins!
+        $det                                                    :: key press
+      =^  inv  som  (~(transceive sole som) +.act)              :: new edit & inv?
+      =.  soles  (~(put by soles) ost.bol som)                  :: accumulate edit
+      [~ +>.$]
+    ==
+  ::
+:: ++  invite-game
+::   |-
+::   [~ +>]
+::   :: :_  +>.$
+::   ::   :~  :*  ost.bol
+::   ::       %peer
+::   ::       /subscribe
+::   ::       [our.bol %source]
+::   ::       /start-game
+::   ::   ==
+::   :: ==
+:: ::
+:: ++  single-player
+::   [~ +>]
+:: ::
+:: ++  wait-game
+::   [~ +>]
 ::
 ++  min-gate
   |=  [ost=bone re=*]
@@ -117,41 +218,56 @@
   |=  a=[@ @]
   ?>(?=(spot a) a) :: If assertion is true, return the input. model validation
 ::
-++  poke-sole-action
-  |=  act=sole-action
-  ^-  (quip move _+>)
-  =/  som  (~(got by soles) ost.bol)
-  ?-    -.act
-      $clr  [~ +>.$]                                           :: clear screen
-      $ret                                                     :: enter
-    ?:  =(~ buf.som)
-      :_  +>.$
-      [(effect txt+"position for '{active-toer}' (e.g. 1/1)  ")]~
-    =/  try  (rust (tufa buf.som) position)
-    ?~  try
-      [~ +>.$]
-    =/  spo  (spot-val u.try)
-    ?:  (~(has by board) spo)
-      :_  +>.$
-      [(effect txt+" Spot taken ")]~
-    =^  out  board  (step [toer spo])
-    =.  toer  switch
-    =.  tabla  [%tan (flop print-board)]
-    ?~  out                                                   :: game goes on
-      :_  +>.$
-      =+  [tabla ~]  [(effect %mor pro+prompt -)]~
-    =/  outcome  :-  %txt
-    %+  weld  " End game:  "
-    ?:(=(out %tie) "it's a tie" (weld last-toer " wins!"))
-    :_  +>.$(board *(map spot player))                        :: cleaning up
-    =-  [(effect %mor outcome -)]~
-    [pro+prompt tabla ~]
-      $det                                                    :: key press
-    =^  inv  som  (~(transceive sole som) +.act)              :: new edit & inv?
-    =.  soles  (~(put by soles) ost.bol som)                  :: accumulate edit
-    [~ +>.$]
-  ==
+++  opt-val
+  |=  per=@t
+  ^-  opts
+  ~
+  :: ?+  per  ~
+  ::   '1'  %1
+  ::   '2'  %2
+  ::   '3'  %3
+  :: ==
 ::
+:: ++  poke-sole-action
+::   |=  act=sole-action
+::   ^-  (quip move _+>)
+::   =/  som  (~(got by soles) ost.bol)
+::   ?-    -.act
+::       $clr  [~ +>.$]                                           :: clear screen
+::       $ret                                                     :: enter
+::     ?~  game
+::       :_  +>.$
+::       [(effect txt+" game option not selected!  ")]~
+::     ?:  =(~ buf.som)
+::       :_  +>.$
+::       [(effect txt+"enter position for '{active-toer}' (e.g. 1/1)  ")]~
+::     =/  try  (rust (tufa buf.som) position)
+::     ?~  try
+::       [~ +>.$]
+::     =/  spo  (spot-val u.try)
+::     ?:  (~(has by board) spo)
+::       :_  +>.$
+::       [(effect txt+" Spot taken ")]~
+::     =^  out  board  (step [toer spo])
+::     ?:  =(game %2)
+::       =.  toer  switch                                        :: auto switch player
+::     ::  toer is switch by subscription update
+::     =.  tabla  [%tan (flop print-board)]
+::     ?~  out                                                   :: game goes on
+::       :_  +>.$
+::       =+  [tabla ~]  [(effect %mor pro+prompt -)]~
+::     =/  outcome  :-  %txt
+::     %+  weld  " End game:  "
+::     ?:(=(out %tie) "it's a tie" (weld last-toer " wins!"))
+::     :_  +>.$(board *(map spot player))                        :: cleaning up
+::     =-  [(effect %mor outcome -)]~
+::     [pro+prompt tabla ~]
+::       $det                                                    :: key press
+::     =^  inv  som  (~(transceive sole som) +.act)              :: new edit & inv?
+::     =.  soles  (~(put by soles) ost.bol som)                  :: accumulate edit
+::     [~ +>.$]
+::   ==
+:: ::
 ++  players-in-row
   |=  ro=num
   =/  col  1
