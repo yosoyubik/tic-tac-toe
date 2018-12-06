@@ -41,6 +41,7 @@ In your urbit's Dojo, run the command:
 
 ## TODO
 - Empty console buffer after `$ret`
+- Fix hardcoded toers (`[%x %o]`) when player doesn't select icon (`[X O]`)
 - Partial board re-paint on each move.
 - Web frontend
 - Follow deco.hoon best-coding practices
