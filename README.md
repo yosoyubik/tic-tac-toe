@@ -31,12 +31,17 @@ In your urbit's Dojo, run the command:
 
     ~your-urbit:dojo> |start %toe
 
-## TODO
+## In Progress
+- Network multiplayer.  [Done! check [network](https://github.com/josl/tic-tac-toe/tree/network) branch for updates]
+- Fix `++  diff-winner` arm when loser ship receives winner
+- Refactor code
+- Move structures to `/=home/%/sur` and library code to `/=home/%/lib`
 
-- Network multiplayer.
+## TODO
 - Partial board re-paint on each move.
 - Web frontend
 - Follow deco.hoon best-coding practices
+- Improve game logic state
 
 ## References
 
