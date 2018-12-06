@@ -40,6 +40,7 @@ In your urbit's Dojo, run the command:
 - Move structures to `/=home=/sur` and library code to `/=home=/lib`
 
 ## TODO
+- Empty console buffer after `$ret`
 - Partial board re-paint on each move.
 - Web frontend
 - Follow deco.hoon best-coding practices
