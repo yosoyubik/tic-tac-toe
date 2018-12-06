@@ -25,7 +25,7 @@ In your urbit's Dojo, run the command:
 
 ## TODO
 
-- Network multiplayer.
+- Network multiplayer.  [Done! check [network](https://github.com/josl/tic-tac-toe/tree/network) branch for updates]
 - Partial board re-paint on each move.
 - Web frontend
 - Follow deco.hoon best-coding practices
