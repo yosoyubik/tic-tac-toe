@@ -1,14 +1,10 @@
 ::
-::::  /hoon/noun/mar
+::::  /hoon/turno/mar
   ::
 /?    310
+/-    toe
+[. toe]
 !:
-=>  |%
-      +=  turno  [=player =spot]
-      +=  player  ?(%x %o ~)
-      +=  spot  [x=num y=num]
-      +=  num  ?(%1 %2 %3)
-    --
 ::::  A minimal turno mark
 |_  turno
 ++  grab  |%

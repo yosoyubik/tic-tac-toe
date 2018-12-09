@@ -16,8 +16,10 @@ app and the console (%sole).
 
 ## Features
 
-- Single player
+- Network multiplayer. [Done! check [network](https://github.com/josl/tic-tac-toe/tree/network) branch for updates]
 - Board state printed in the console
+- Structures in `/=home=/sur` and marks for updates
+- Notification for game invitation
 
 ## Network install
 
@@ -34,18 +36,17 @@ In your urbit's Dojo, run the command:
     ~your-urbit:dojo> |start %toe
 
 ## In Progress
-- Network multiplayer.  [Done! check [network](https://github.com/josl/tic-tac-toe/tree/network) branch for updates]
-- Fix `++  diff-winner` arm when loser ship receives winner
-- Refactor code
-- Move structures to `/=home=/sur` and library code to `/=home=/lib`
+- Refactor code (remove redundant code)
+- Keep track of incoming request
+- Use queue instead of list to keep track on subscriptions on hold
 
 ## TODO
-- Empty console buffer after `$ret`
 - Fix hardcoded toers (`[%x %o]`) when player doesn't select icon (`[X O]`)
 - Partial board re-paint on each move.
 - Web frontend
-- Follow deco.hoon best-coding practices
-- Improve game logic state
+- Follow `/=home=/gen/deco.hoon` best-coding practices
+- Improve game state transtition
+- Both apps need to be running before sending request to play
 
 ## References
 

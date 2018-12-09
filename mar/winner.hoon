@@ -1,11 +1,13 @@
 ::
-::::  /hoon/noun/mar
+::::  /hoon/winner/mar
   ::
 /?    310
+/-    toe
+[. toe]
 !:
-::::  A minimal invite mark
-|_  non=*
+::::  A minimal winner mark
+|_  winner
 ++  grab  |%
-          ++  noun  [%txt tape]
+          ++  noun  winner
           --
 --

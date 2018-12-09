@@ -1,14 +1,13 @@
 ::
-::::  /hoon/noun/mar
+::::  /hoon/invite/mar
   ::
 /?    310
+/-    toe
+=,    toe
 !:
-=>  |%
-    +=  player  ?(%x %o ~)
-    --
 ::::  A minimal invite mark
-|_  non=player
+|_  invite
 ++  grab  |%
-          ++  noun  player
+          ++  noun  invite
           --
 --
