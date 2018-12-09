@@ -501,7 +501,7 @@
                 bon.consol
                 :~  %mor
                     det+edit
-                    (prompt (weld confirm "{<invite>} (Y/N) | "))
+                    (prompt (weld confirm "{<ship.invite>} (Y/N)? | "))
                 ==
         ==
     %=  +>.$
