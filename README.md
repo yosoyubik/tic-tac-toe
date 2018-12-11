@@ -34,6 +34,7 @@ In your urbit's Dojo, run the command:
 - Use queue instead of list to keep track on subscriptions on hold
 
 ## TODO
+- Remove player selection (make it random)
 - Fix hardcoded toers (`[%x %o]`) when player doesn't select icon (`[X O]`)
 - Partial board re-paint on each move.
 - Web frontend
