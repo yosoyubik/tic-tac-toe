@@ -3,14 +3,14 @@
   ::
 |%
 +=  board     (map spot player)
-+=  table     [%tan rows=(list row)]
 +=  row       [%leaf tape]
++=  table     [%tan rows=(list row)]
 +=  outcome   ?(%wins %tie ~)
-+=  turno     [=player =spot]
 +=  player    ?(%x %o ~)
 +=  spot      [x=num y=num]
++=  turno     [=player =spot]
 +=  num       ?(%1 %2 %3)
-+=  opts      ?(%1 %2 %3 %4 %5)
++=  opts      ?(%1 %2 %3 %4)
 +=  restart   (unit %0)
 +=  invite    [player restart]
 +=  winner    [out=tape tur=turno]

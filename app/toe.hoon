@@ -26,7 +26,7 @@
                        subs=(unit bone)                 :: tracks subscription
                        game=opts                        :: game state
                        src-toer=(unit ship)             :: opponent
-                       who=ship                         :: who's turn is (mutex)
+                       who=ship                         :: who's turn (mutex)
                        next=?
                        reqs=requests
                     ==
@@ -44,8 +44,8 @@
                        [%end ~]
                        [%sole-effect sole-effect:sole]
                    ==
-    +=  console    $:  bon=bone                        :: socket for the console
-                       share=sole-share:sole                :: console's state
+    +=  console    $:  bon=bone                           :: socket (kinda?)
+                       share=sole-share:sole              :: console's state
                    ==
     :>  #
     :>  #  %constant
@@ -53,17 +53,17 @@
     :>  constants, in their own chapter.
     +|
     ++  welcome   txt+"TIC-TAC-TOE "
-    ++  menu-1    " | player? (X/O) | "
-    ++  menu-2    " | opponent? "
+    :: ++  menu-1    " | player? (X/O) | "
+    ++  menu-1    " | opponent? "
     ++  waiting   " | waiting for "
     ++  keep-on   " continue? (Y/N) | "
     ++  confirm   " | play with "
     ++  continue  txt+" | ready for more? (Y/N) | "
     ++  row-sep   leaf+" ---------"
     ++  texto     txt+"¡hola terricola!"
-    ++  claro     clr+~                                 :: clear screen
-    ++  reset     set+~                                 :: reset prompt
-    ++  tong      bel+~                                 :: call to arms
+    ++  claro     clr+~                                   :: clear screen
+    ++  reset     set+~                                   :: reset prompt
+    ++  tong      bel+~                                   :: call to arms
     ++  barra     '/'
     --
 ::
@@ -125,18 +125,6 @@
   ?~  per  " "
   (cuss (scow %tas u.per))
 ::
-++  help
-  ^-  (list sole-effect:sole)
-  =-  (scan - (more (just '\0a') (stag %txt (star prn))))
-  ?~  subs  "You are on!"
-  """
-
-  1 - invite ship to a game (e.g. 1: ~marzod)
-  2 - start lonely game     (e.g. 2: ~)
-  3 - start game and wait   (e.g. 3: ~)
-
-  """
-::
 ++  diff-invite                                             :: invite accepted
   |=  [wir=wire per=player ret=restart]
   ^-  (quip move _+>)
@@ -150,7 +138,7 @@
                 ==
          ==
     %=  +>.$
-        game      %4
+        game      %3
         src-toer  [~ src.bol]
         who       src.bol                                 :: opponet's turn
     ==                                                    :: subsequent matches
@@ -160,7 +148,7 @@
   =.  tabla  [%tan (flop print-board)]
   =/  our-icon  (get-icon [~ (switch [~ per])])
   =/  src-icon  (get-icon [~ per])
-  :_  +>.$(game %4, who our-toer, next %.n)
+  :_  +>.$(game %3, who our-toer, next %.n)
   :~  %+  effect
           bon.consol
           :~  %mor
@@ -194,7 +182,7 @@
   ^-  (quip move _+>)
   =^  out  bo  (step tur.win)
   =.  tabla  [%tan (flop print-board)]
-  :_  +>.$(game %5)
+  :_  +>.$(game %4)
   :~  %+  effect
           bon.consol
           mor+[tabla (prompt (weld out.win keep-on)) ~]
@@ -209,7 +197,7 @@
             (prompt (weld confirm "{<src.bol>}? (Y/N) | "))
         ==
     %=  +>.$
-        game      %3
+        game      %2
         src-toer  [~ src.bol]
         subs      [~ ost.bol]
     ==
@@ -303,9 +291,6 @@
   ^-  move
   [bon %diff %sole-effect fec]
 ::
-++  prompt-init                                         :: game start prompt
-  ^-  sole-prompt:sole
-  [& %$ " select one of the options (1-3) "]
 ::
 ++  prompt                                              :: game input prompt
   |=  dial=tape
@@ -317,7 +302,6 @@
   ^-  (quip move _+>)
   =.  tabla  [%tan (flop print-board)]
   =/  output  mor+[clr+~ welcome tabla (prompt menu-1) ~]
-  :: =.  soles  (~(put by soles) ost.bol *sole-share:sole)
   =.  consol  [ost.bol *sole-share:sole]
   :_  +>.$
   [(effect ost.bol output)]~
@@ -343,19 +327,19 @@
   |=  buf=sole-buffer:sole
   ^-  (quip move _+>)
   ?-    game                                           :: game state
-      %1                                               :: 1: select toer (X O)
-    =/  try  (rust (tufa buf) (mask "XO"))
-    ?~  try
-      :_  +>.$
-      [(effect bon.consol txt+" toer not selected [X or O]!  ")]~
-    =.  toers  (~(put by toers) our.bol (toer-to-symbol u.try))
-    =^  edit  share.consol  (transmit-sole reset)
-    :_  +>.$(game %2)
-    :~  %+  effect
-            bon.consol
-            mor+[det+edit (prompt menu-2) ~]
-    ==
-      %2                                                :: 2: select opponent
+    ::   %1                                               :: 1: select toer (X O)
+    :: =/  try  (rust (tufa buf) (mask "XO"))
+    :: ?~  try
+    ::   :_  +>.$
+    ::   [(effect bon.consol txt+" toer not selected [X or O]!  ")]~
+    :: =.  toers  (~(put by toers) our.bol (toer-to-symbol u.try))
+    :: =^  edit  share.consol  (transmit-sole reset)
+    :: :_  +>.$(game %2)
+    :: :~  %+  effect
+    ::         bon.consol
+    ::         mor+[det+edit (prompt menu-2) ~]
+    :: ==
+      %1                                                :: 1: select opponent
     =/  try  (rust (tufa buf) ;~(pfix sig fed:ag))
     ?~  try
       [~ +>.$]                                          :: still waiting...
@@ -372,7 +356,7 @@
                         (prompt (weld waiting "{(scow %p u.try)} | "))
                     ==
     ==
-      %3                                                :: 3. Wait for confirm
+      %2                                                :: 2. Wait for confirm
     =/  try  (rust (tufa buf) (mask "YN"))
     ?~  try
       [~ +>.$]
@@ -384,7 +368,7 @@
     =+  our-icon=(get-icon [~ %x])
     =+  src-icon=(get-icon [~ %o])
     =^  edit  share.consol  (transmit-sole reset)
-    :_  +>.$(game %4, who our-toer)                     ::  first turn
+    :_  +>.$(game %3, who our-toer)                     ::  first turn
     :~  %+  effect
             bon.consol
             :~  %mor
@@ -400,7 +384,7 @@
         ==
         (confirm-invite [%o ~])                          :: send other's icon
     ==
-      %4                                                :: 4. Moves start!
+      %3                                                :: 3. Moves start!
     =/  try  (rust (tufa buf) position)
     ?~  try
       [~ +>.$]
@@ -440,11 +424,11 @@
                 ==
         ==
     %=  +>.$                                                   :: cleaning up
-        game         %5
+        game         %4
         bo        ~
         tabla        [%tan ~]
     ==
-      %5                                                       :: reset/continue
+      %4                                                       :: reset/continue
     =/  try  (rust (tufa buf) (mask "YN"))
     ?~  try
       [~ +>.$]
@@ -455,7 +439,7 @@
       =/  our-icon  (get-icon (~(get by toers) our-toer))
       =/  src-icon  (get-icon (~(get by toers) (need src-toer)))
       ?:  =(next %.y)                                 :: opponent had confirmed
-        :_  +>.$(game %4, who (need src-toer), next %.n)
+        :_  +>.$(game %3, who (need src-toer), next %.n)
         :~  (confirm-invite [(~(got by toers) our-toer) [~ %0]])
             %+  effect
                 bon.consol
@@ -465,7 +449,7 @@
                     (prompt " | {<our-toer>}:[{our-icon}] -> {<(need src-toer)>}:[{src-icon}] | ")
                 ==
         ==
-      :_  +>.$(game %5, next %.y)
+      :_  +>.$(game %4, next %.y)
       :~  (confirm-invite [(~(got by toers) our-toer) [~ %0]])
           %+  effect
               bon.consol
