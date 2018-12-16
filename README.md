@@ -13,7 +13,9 @@ TODO
 - Board state printed in the console
 - Structures in `/=home=/sur` and marks for updates
 - Notification for game invitation
-
+- Use queue instead of list to keep track on subscriptions on hold
+  - Research Gall to replace this
+- Pending requests to play are queued and pulled one current game finishes.
 ## Network install
 
 TODO
@@ -30,16 +32,14 @@ In your urbit's Dojo, run the command:
 
 ## In Progress
 - Refactor code (remove redundant code)
-- Keep track of incoming request
-- Use queue instead of list to keep track on subscriptions on hold
-
+- Follow `/=home=/gen/deco.hoon` best-coding practices
+- Improve game state transtition
+  - Use a door for `++  game-engine`
 ## TODO
 - Remove player selection (make it random)
 - Fix hardcoded toers (`[%x %o]`) when player doesn't select icon (`[X O]`)
 - Partial board re-paint on each move.
 - Web frontend
-- Follow `/=home=/gen/deco.hoon` best-coding practices
-- Improve game state transtition
 - Both apps need to be running before sending request to play
 
 ## References

@@ -1,13 +1,13 @@
 ::
-::::  /hoon/turno/mar
+::::  /hoon/turno/toe/mar
   ::
 /?    310
 /-    toe
-[. toe]
+=,    toe
 !:
 ::::  A minimal turno mark
-|_  turno
+|_  toe-turno
 ++  grab  |%
-          ++  noun  turno
+          ++  noun  toe-turno
           --
 --

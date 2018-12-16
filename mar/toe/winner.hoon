@@ -1,13 +1,13 @@
 ::
-::::  /hoon/winner/mar
+::::  /hoon/winner/toe/mar
   ::
 /?    310
 /-    toe
-[. toe]
+=,    toe
 !:
 ::::  A minimal winner mark
-|_  winner
+|_  toe-winner
 ++  grab  |%
-          ++  noun  winner
+          ++  noun  toe-winner
           --
 --
