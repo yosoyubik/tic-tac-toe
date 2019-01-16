@@ -13,7 +13,7 @@
     :>  #  %models
     :>  #
     +|
-    +=  state      $:  tabla=table                      :<  board on screen
+    +$  state      $:  tabla=table                      :<  board on screen
                        consol=console                   :<  sole-share
                        bo=board                         :<  game internal board
                        toers=(map ship player)          :<  who's who
@@ -23,20 +23,20 @@
                        next=?                           :<  keep playing?
                        opos=subs                        :<  subscription queue   TODO: explore if gall has this
                     ==
-    +=  move       (pair bone card)
-    +=  card       $%  [%diff diff-data]
+    +$  move       (pair bone card)
+    +$  card       $%  [%diff diff-data]
                        [%peer wire dock path]
                        [%pull wire dock ~]
                    ==
-    +=  diff-data  $%  [%toe-turno toe-turno]
+    +$  diff-data  $%  [%toe-turno toe-turno]
                        [%toe-player message player]
                        [%toe-winner toe-winner]
                        [%sole-effect sole-effect:sole]
                    ==
-    +=  console    $:  bon=bone                         :<  socket (kinda?)
+    +$  console    $:  bon=bone                         :<  socket (kinda?)
                        sha=sole-share:sole              :<  console's state
                    ==
-    +=  spot       [num num]                            :<  has to be redefined  FIXME: ?!? wtf! it's already in sur...
+    +$  spot       [num num]                            :<  has to be redefined  FIXME: ?!? wtf! it's already in sur...
     :>  #
     :>  #  %constants
     :>  #
