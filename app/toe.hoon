@@ -12,7 +12,7 @@
     ::  #
     ::  #  %models
     ::  #
-    +|
+    +|  %models
     +$  state      $:  tabla=table                      ::  board on screen
                        consol=console                   ::  sole-share
                        bo=board                         ::  game internal board
@@ -40,7 +40,7 @@
     ::  #
     ::  #  %constants
     ::  #
-    +|
+    +|  %constants
     ++  welcome   txt+"WOPR's TIC-TAC-TOE "
     ++  menu-1    " | opponent? "
     ++  waiting   " | waiting for "
@@ -62,7 +62,7 @@
 ::  #
 ::  #  %state
 ::  #
-+|
++|  %state
 ::
 ++  this  .
 ::
@@ -89,7 +89,7 @@
 ::  #  %core
 ::  #
 ::    (game engine logic)
-+|
++|  %core
 ::
 ++  ge
   ::
@@ -204,7 +204,7 @@
 ::  #  %comunication
 ::  #
 ::    (gall-related arms for urbit-to-urbit communication)
-+|
++|  %comms
 ::
 ++  peer-invite
   ::   enqueues new request and asks for confirmation
@@ -344,7 +344,7 @@
 ::  #  %console
 ::  #
 ::    (%sole & and prompt formatting)
-+|
++|  %consol
 ::
 ++  poke-sole-action
   |=  act=sole-action:sole
@@ -463,7 +463,7 @@
 ::  #
 ::
 ::     (pattern matching on input)
-+|
++|  %rules
 ::
 ++  num-rule  (shim '1' '3')
 ++  indice    (cook |=(a/@ (sub a '0')) num-rule)
@@ -473,10 +473,10 @@
   |=  a=[@ @]
   ?>(?=(spot a) a)
 ::  #
-::  #  %toe
+::  #  %game
 ::  #
 ::     (arms for game-specific actions)
-+|
++|  %game
 ::
 ++  step
   |=  tur=toe-turno
@@ -520,7 +520,7 @@
 ::  #  %helpers
 ::  #
 ::     (TODO: move to /===/lib)
-+|
++|  %help
 ::
 ++  switch
   |=  toer=(unit player)
