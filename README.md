@@ -13,7 +13,7 @@ TODO
 - Board state printed in the console
 - Structures in `/=home=/sur` and marks for updates
 - Notification for game invitation
-- Use queue instead of list to keep track on subscriptions on hold
+- Uses queue instead of list to keep track on subscriptions on hold
   - Research Gall to replace this
 - Pending requests to play are queued and pulled one current game finishes.
 ## Network install
@@ -36,11 +36,10 @@ In your urbit's Dojo, run the command:
 - Improve game state transtition
   - Use a door for `++  game-engine`
 ## TODO
-- Remove player selection (make it random)
-- Fix hardcoded toers (`[%x %o]`) when player doesn't select icon (`[X O]`)
 - Partial board re-paint on each move.
 - Web frontend
 - Both apps need to be running before sending request to play
+- Single-player mode
 
 ## References
 
