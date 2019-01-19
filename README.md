@@ -40,6 +40,7 @@ In your urbit's Dojo, run the command:
 - Web frontend
 - Both apps need to be running before sending request to play
 - Single-player mode
+- Follow [code style](https://urbit.org/docs/learn/arvo/style/)
 
 ## References
 
