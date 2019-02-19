@@ -18,7 +18,7 @@ TODO
 - Pending requests to play are queued and pulled one current game finishes.
 ## Network install
 
-TODO
+    |sync %toe ~norsyr-torryn %toe
 
 ## Local install
 
