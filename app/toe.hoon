@@ -2,26 +2,45 @@
 ::::  /hoon/toe/app
   ::
 /?    310
-/-    toe                                               ::  models
+/-    toe                                               ::  toe structures
 /+    sole                                              ::  console lib
 [. toe sole]                                            ::  exposes namespace
+::  stack trace on
 ::
-!:                                                      ::  stack trace on
+!:
 ::
 =>  |%
-    ::  #
-    ::  #  %models
-    ::  #
     +|  %models
-    +$  state      $:  tabla=table                      ::  board on screen
-                       consol=console                   ::  sole-share
-                       bo=board                         ::  game internal board
-                       toers=(map ship player)          ::  who's who
-                       me=ship                          ::  me (aka I)
-                       game=opts                        ::  game state
-                       who=ship                         ::  who's turn (mutex)
-                       next=?                           ::  keep playing?
-                       opos=subs                        ::  subscription queue   TODO: explore if gall has this
+    ::
+    +$  state      $:  ::  $tabla: board representation on screen
+                       ::
+                       tabla=table
+                       ::  $consol: console state (from sole-share)
+                       ::
+                       consol=console
+                       ::  $bo: game internal board
+                       ::
+                       bo=board
+                       ::  $toers: players in the game by ship and icon (%x or %o)
+                       ::
+                       toers=(map ship player)
+                       ::  $me: alias for own player's identity
+                       ::    (instead of src.bol)
+                       ::
+                       me=ship
+                       ::  $game: game state (see ++ ge core)
+                       ::
+                       game=opts
+                       ::  $who: player that owns the turn
+                       ::
+                       who=ship
+                       ::  %next: flag to indicate a replay
+                       ::
+                       next=?
+                       ::  $opos: queue of players waiting to play
+                       ::    TODO: explore if gall has a similar feature
+                       ::
+                       opos=subs
                     ==
     +$  move       (pair bone card)
     +$  card       $%  [%diff diff-data]
@@ -33,14 +52,20 @@
                        [%toe-winner toe-winner]
                        [%sole-effect sole-effect:sole]
                    ==
-    +$  console    $:  bon=bone                         ::  socket (kinda?)
-                       sha=sole-share:sole              ::  console's state
+    +$  console    $:  ::  $bon: number indentifying console connection
+                       ::
+                       bon=bone
+                       ::  $sha: console's state
+                       ::
+                       sha=sole-share:sole
                    ==
-    +$  spot       [num num]                            ::  has to be redefined  FIXME: ?!? wtf! it's already in sur...
-    ::  #
-    ::  #  %constants
-    ::  #
+    ::  FIXME: has to be redefined
+    ::     even though it's already in sur...
+    ::
+    +$  spot       [num num]
+    ::
     +|  %constants
+    ::
     ++  welcome   txt+"WOPR's TIC-TAC-TOE "
     ++  menu-1    " | opponent? "
     ++  waiting   " | waiting for "
@@ -49,22 +74,31 @@
     ++  confirm   " | play with "
     ++  continue  txt+" | ready for more? (Y/N) | "
     ++  row-sep   leaf+"    ---------"
-    ++  claro     clr+~                                 ::  clear screen
-    ++  reset     set+~                                 ::  reset prompt
-    ++  tong      bel+~                                 ::  call to arms
+    ::  $claro: clears the screen
+    ::
+    ++  claro     clr+~
+    ::  $reset: clears the prompt
+    ::
+    ++  reset     set+~
     --
 ::
-::  #
-::  #  %app
-::  #
+::  %app
+::
+::    Our app is defined as a "door" (multi-armed core with a sample).
+::    Arms are grouped in chapters (+|) based on common functionality
+::
 |_  [bol=bowl:gall state]
 ::
-::  #
-::  #  %state
-::  #
+::  %state
+::
+::    Arms to innitialized (and restart) our app's state
+::
 +|  %state
 ::
-++  this  .
+++  this
+::  Common idiom to refer to our %app as a whole
+::
+.
 ::
 ++  prep
   |=  *
@@ -85,17 +119,19 @@
       tabla  [%tan ~]
   ==
 ::
-::  #
-::  #  %core
-::  #
-::    (game engine logic)
+::  %core
+::
+::    Game engine core logic
+::
 +|  %core
 ::
 ++  ge
   ::
   |_  buf=sole-buffer:sole
   ::
-  ++  ge-opponent                                       ::  G1: select opponent
+  ::  $select-opponent: step 1 -> select opponent
+  ::
+  ++  select-opponent
     ^-  (quip move _this)
     =/  try  (rust (tufa buf) ;~(pfix sig fed:ag))
     ?~  try
@@ -107,29 +143,39 @@
         (effect mor+~[det+edit up-prompt])
     ==
   ::
-  ++  ge-confirm                                        ::  G2: wait for confirm
+  ::  $wait-confirm: step 2  -> wait for confirmation
+  ::
+  ++  wait-confirm
     ^-  (quip move _this)
     =/  try  (rust (tufa buf) (mask "YN"))
     ?~  try
       [~ this]
     ?:  =(u.try 'N')
       check-subscriptions
-    =/  opo  (need ~(top to opos))                      ::  1st incoming sub
+    ::  unqueues the 1st incoming sub
+    ::
+    =/  opo  (need ~(top to opos))
     =.  toers  %-  ~(gas by toers)
-               ~[[me %x] [ze.opo %o]]                   ::  me = X, ze = O
+               ::  the player's icons are harcoded: me = X, ze = O
+               ~[[me %x] [ze.opo %o]]
     =/  icons  (get-icons %x)
-    =^  edit  sha.consol  (transmit-sole reset)         ::  clean up prompt
-    :_  this(game %start, who me)                       ::  first turn => me
+    ::  cleans up the prompt
+    ::
+    =^  edit  sha.consol  (transmit-sole reset)
+    ::  by default, the first turn is me (the one who sent the request)
+    ::
+    :_  this(game %start, who me)
     :~  subscribe-back
         (send-message [%accept %o])
         %-  effect
         :~  %mor
             det+edit
             (prompt " | {<me>}:[{-:icons}] <- {<ze.opo>}:[{+:icons}] | ")
-        ==
-    ==
+    ==  ==
   ::
-  ++  ge-start                                          ::  G3: moves start
+  ::  $moves-start: step 3 -> moves start
+  ::
+  ++  moves-start
     ^-  (quip move _this)
     =/  try  (rust (tufa buf) position)
     ?~  try
@@ -148,26 +194,30 @@
     =.  tabla  print-board
     ?~  out
       =/  opo  (need ~(top to opos))
-      :_  this(who ze.opo)                              ::  switches turn
+      ::  we switch turns
+      ::
+      :_  this(who ze.opo)
       :~  (send-turno new-step)
           %-  effect
           :~  %mor
               tabla
               det+edit
               (prompt " | {<me>}:[{-:icon}] -> {<ze.opo>}:[{+:icon}] | ")
-          ==
-      ==
-    :_  this(bo ~, game %replay, tabla [%tan ~])        ::  game ends
+      ==  ==
+    ::  game ends
+    ::
+    :_  this(bo ~, game %replay, tabla [%tan ~])
     :~  (send-winner [(end-message out) new-step])
         %-  effect
         :~  %mor
             det+edit
             tabla
             (prompt (weld (end-message out) keep-on))
-        ==
-    ==
+    ==  ==
   ::
-  ++  ge-replay                                         ::  G4: wait for replay
+  ::  $continue-replay: step 4 -> wait for replay
+  ::
+  ++  continue-replay
     ^-  (quip move _this)
     =/  try  (rust (tufa buf) (mask "YN"))
     ?~  try
@@ -180,7 +230,9 @@
     =/  icon  (get-icons (~(got by toers) me))
     =/  opo  (need ~(top to opos))
     =/  rematch  (send-message [%rematch (~(got by toers) me)])
-    ?:  =(next %.y)                                     ::  ze already confirmed
+    ::  checks if ze (opponent) has already confirmed?
+    ::
+    ?:  =(next %.y)
       :_  this(game %start, who ze.opo, next %.n)
       :~  rematch
           %-  effect
@@ -188,27 +240,28 @@
               tabla
               det+edit
               (prompt " | {<me>}:[{-:icon}] -> {<ze.opo>}:[{+:icon}] | ")
-          ==
-      ==
+      ==  ==
     :_  this(game %replay, next %.y)
     :~  rematch
         %-  effect
         :~  %mor
             det+edit
             (prompt " | ...waiting for {<ze.opo>}'s {abor} |")
-        ==
-    ==
+    ==  ==
   --
 ::
-::  #
-::  #  %comunication
-::  #
-::    (gall-related arms for urbit-to-urbit communication)
+::  %comunication
+::
+::    Gall-related arms for urbit-to-urbit communication
+::
 +|  %comms
 ::
+::  $peer-invite: receives/enqueues a request to start a game
+::
+::    if a game is ongoing, enqueues the new request or
+::    asks for confirmation if there are no active games.
+::
 ++  peer-invite
-  ::   enqueues new request and asks for confirmation
-  ::  if only one request in queue otherwise waits
   |=  pax=path
   ^-  (quip move _+>)
   =.  opos  (~(put to opos) [| ost.bol /invite src.bol])
@@ -217,51 +270,67 @@
     ~[(effect (prompt (weld confirm "{<src.bol>}? (Y/N) | ")))]
   :_  +>
   ~[(effect txt+" [{<src.bol>} wants to play] ")]
- ::
-++  send-invite                                         ::  request to play
+::
+::  $send-invite: sends a request to play to a ship
+::
+++  send-invite
   |=  ze=ship
   ^-  move
   [ost.bol %peer /invite [ze dap.bol] /invite]
 ::
-++  peer-back                                           ::  received from
-  |=  pax=path                                          ::  ++  subscribe-back
+::  $peer-back: subscribes back to the ship that requested to play with us
+::
+::    (received on opponent's ship from a 'subscribe-back' move)
+::
+++  peer-back
+  |=  pax=path
   ^-  (quip move _+>)
   [~ +>(opos (~(put to opos) [& ost.bol /back src.bol]))]
+::
+:: TODO: research 2-way subs model with Hall
 ::
 ++  subscribe-back
   ^-  move
   =/  guest  (need ~(top to opos))
-  =/  up-opo  [& bo.guest /invite ze.guest]             ::  subs confirmed
+  =/  up-opo  [& bo.guest /invite ze.guest]
   =.  opos   (~(put to ~(nap to opos)) up-opo)
   :*  bo.guest
-      %peer                                                                     :: TODO: research 2-way
-      /back                                                                     :: subs model
-      [ze.guest dap.bol]                                                        :: with Hall?
+      %peer
+      /back
+      [ze.guest dap.bol]
       /back
   ==
 ::
-++  diff-toe-player                                     ::  invite accepted
+::  $diff-toe-player: innvite accepted with we our opponent's icon (%x or %o)
+::
+++  diff-toe-player
   |=  [wir=wire msg=message per=player]
   ^-  (quip move _+>)
   =/  icon  (get-icons per)
   ?-    msg
-     %accept                                            ::  first match
-   :_  +>.$(game %start, who src.bol)
-   ~[(effect (prompt " | {<me>}:[{-:icon}] -> {<src.bol>}:[{+:icon}] "))]
-     %rematch
-   ?.  next                                             ::  already said yes?
-     [~ +>.$(next %.y)]
-   =.  bo  ~                                            ::  fresh start
-   =.  tabla  print-board
-   =/  guest  (need ~(top to opos))
-   :_  +>.$(game %start, who me, next %.n)
-   :_  ~
-   %-  effect
-   :~  %mor
-       tabla
-       (prompt " | {<me>}:[{+:icon}] <- {<ze.guest>}:[{-:icon}] ")
-   ==
-  ==
+      ::  first match
+      ::
+      %accept
+    :_  +>.$(game %start, who src.bol)
+    ~[(effect (prompt " | {<me>}:[{-:icon}] -> {<src.bol>}:[{+:icon}] "))]
+  ::
+      ::  game has endend and we ask to continue playing
+      ::
+      %rematch
+    ::  already said yes?
+    ::
+    ?.  next
+      [~ +>.$(next %.y)]
+    =.  bo  ~
+    =.  tabla  print-board
+    =/  guest  (need ~(top to opos))
+    :_  +>.$(game %start, who me, next %.n)
+    :_  ~
+    %-  effect
+        :~  %mor
+            tabla
+            (prompt " | {<me>}:[{+:icon}] <- {<ze.guest>}:[{-:icon}] ")
+  ==    ==
 ::
 ++  send-message
   |=  [msg=message per=player]
@@ -272,18 +341,24 @@
 ++  diff-toe-winner
   |=  [wir=wire win=toe-winner]
   ^-  (quip move _+>)
-  =^  out  bo  (step tur.win)                           ::  show winner move
+  ::  puts the winner move on the board
+  ::
+  =^  out  bo  (step tur.win)
   =.  tabla  print-board
   :_  +>.$(game %replay)
   ~[(effect mor+~[tabla (prompt (weld out.win keep-on))])]
 ::
-++  send-winner                                         ::  spam with winner
+::  %send-winner: spams our opponent with the winner move
+::
+++  send-winner
   |=  win=toe-winner
   ^-  move
   =/  guest  (need ~(top to opos))
   [bo.guest %diff %toe-winner win]
 ::
-++  send-turno                                          ::  spam with turno
+::  $send-turno: spams our opponent with our game move (turno)
+::
+++  send-turno
   |=  tur=toe-turno
   ^-  move
   =/  guest  (need ~(top to opos))
@@ -292,20 +367,24 @@
 ++  diff-toe-turno
   |=  [wir=wire tur=toe-turno]
   ^-  (quip move _+>.$)
-  =^  out  bo  (step tur)                               ::  move on board
+  ::  puts the opponent's move on the  board
+  ::
+  =^  out  bo  (step tur)
   =.  toers  %-  ~(gas by toers)
-            :~  [src.bol per.tur]
-                [our.bol (switch `per.tur)]             ::  me = X, ze = O
-            ==
+             :~  [src.bol per.tur]
+                 [our.bol (switch `per.tur)]
+             ==
   =.  tabla  print-board
   =/  icon   (get-icons per.tur)
   =/  guest  (need ~(top to opos))
-  :_  +>.$(who me)                                      ::  now is our turn
+  ::  now is our turn
+  ::
+  :_  +>.$(who me)
   :_  ~
   %-  effect
   :~  %mor
-     tabla
-     (prompt " | {<me>}:[{+:icon}] <- {<ze.guest>}:[{-:icon}] | ")
+      tabla
+      (prompt " | {<me>}:[{+:icon}] <- {<ze.guest>}:[{-:icon}] | ")
   ==
 ::
 ++  unsubscribe
@@ -324,11 +403,13 @@
 ++  reap
   |=  [wir=wire err=(unit tang)]
   ?~  err
-   [~ +>]
+    [~ +>]
   :_  +>.$
   ~[(effect tan+u.err)]
 ::
-++  poke-atom                                           ::  manual reset
+::  $poke-atom: poking the app with any atom will do a manual wipe of the state
+::
+++  poke-atom
   |=  a=@
   ^-  (quip move _+>)
   (wipe ~[(effect mor+~[claro welcome tabla (prompt menu-1)])])
@@ -336,38 +417,56 @@
 ++  coup
   |=  [wir=wire err=(unit tang)]
   ?~  err
-   [~ +>]
+    [~ +>]
   :_  +>.$
   ~[(effect tan+u.err)]
 ::
-::  #
-::  #  %console
-::  #
-::    (%sole & and prompt formatting)
-+|  %consol
+::  %console
+::
+::    %sole arms to received console moves and prompt formatting
+::
++|  %console
 ::
 ++  poke-sole-action
   |=  act=sole-action:sole
   ^-  (quip move _+>)
-  =/  share  sha.consol                                 ::  FIXME: alias?
+  ::  FIXME: should an alias be used instead?
+  ::
+  =/  share  sha.consol
   ?-    -.act
-     $clr  [~ this]                                     ::  clear screen
-     $ret                                               ::  enter
-   ?~  buf.share  [~ this]
-   =/  try  (rust (tufa buf.share) ;~(just zap))        ::  restart game
-   ?.  =(~ try)  check-subscriptions
-   ?-    game
-       %opponent  ~(ge-opponent ge buf.share)           ::  G1: select opponent
-       %confirm   ~(ge-confirm ge buf.share)            ::  G2: wait for confirm
-       %start     ~(ge-start ge buf.share)              ::  G3: moves start
-       %replay    ~(ge-replay ge buf.share)             ::  G4: end/continue?
-   ==
-     $det                                               ::  key press
-   =^  inv  sha.consol  (~(transceive sole share) +.act)
-   [~ this]
+    ::  clear screen
+    ::
+    $clr  [~ this]
+    ::  enter
+    ::
+    $ret  ?~  buf.share  [~ this]
+          ::  checks for a restart game command
+          =/  try  (rust (tufa buf.share) ;~(just zap))
+          ?.  =(~ try)  check-subscriptions
+          ::  based on the current state, a different engine arm is called
+          ?-    game
+             ::  Game Engine Step 1: selects opponent
+             ::
+             %opponent  ~(select-opponent ge buf.share)
+             ::  Game Engine Step 2: waits for confirmation
+             ::
+             %confirm   ~(wait-confirm ge buf.share)
+             ::  Game Engine Step 3: moves start
+             ::
+             %start     ~(moves-start ge buf.share)
+             ::  Game Engine Step 4: end/continue?
+             ::
+             %replay    ~(continue-replay ge buf.share)
+          ==
+    ::  key press
+    ::
+    $det  =^  inv  sha.consol  (~(transceive sole share) +.act)
+          [~ this]
   ==
 ::
-++  peer-sole                                           ::  sole subscribes
+::  $peer-sole: sole's subscription arm that connects to the console
+::
+++  peer-sole
   |=  path
   ^-  (quip move _+>)
   =.  tabla   print-board
@@ -385,12 +484,16 @@
   ^-  [sole-change sole-share]
   (~(transmit sole sha.consol) inv)
 ::
-++  prompt                                              ::  game input prompt
+::  $prompt: default game input that modifies the prompt
+::
+++  prompt
   |=  dial=tape
   ^-  sole-effect:sole
   pro+[& %$ dial]
 ::
-++  print-row                                           ::  pretty prints row
+::  $print-row: pretty prints a row of the board displayed on the console
+::
+++  print-row
   |=  ro=@
   ^-  [%leaf tape]
   =/  co  1
@@ -409,7 +512,9 @@
       ~
   $(co (add co 1))
 ::
-++  print-board                                         ::  pretty prints board
+::  $print-board: pretty prints the board displayed on the console
+::
+++  print-board
   =/  ro  1
   |-  ^-  table
   :-  %tan
@@ -428,22 +533,27 @@
 ::
 ++  check-subscriptions
   ^-  (quip move _this)
-  ?:  |(?=(~ opos) ?=(~ ~(nap to opos)))                ::  one or no subs
+  ::  if there is one or no subs, game will be restarted
+  ::
+  ?:  |(?=(~ opos) ?=(~ ~(nap to opos)))
     restart-game
-  =/  opo  (need ~(top to ~(nap to opos)))              ::  always unqueue head
+  ::  unqueues the head of the subscriptions
+  ::
+  =/  opo  (need ~(top to ~(nap to opos)))
   =^  edit   sha.consol  (transmit-sole reset)
   :-  :~  unsubscribe
           %-  effect
           :~  %mor
               det+edit
               (prompt (weld confirm "{<ze.opo>} (Y/N)? | "))
-          ==
-      ==
+      ==  ==
   %=  this
       bo     ~
       game   %confirm
       tabla  [%tan ~]
-      opos   ~(nap to opos)                             ::  dequeue
+      opos   ::  dequeues after request has been processed
+             ::
+             ~(nap to opos)
   ==
 ::
 ++  restart-game
@@ -458,11 +568,10 @@
       [unsubscribe ~]
   ==
 ::
-::  #
-::  #  %rules
-::  #
+::  %rules
 ::
-::     (pattern matching on input)
+::    Pattern matching on console's input
+::
 +|  %rules
 ::
 ++  num-rule  (shim '1' '3')
@@ -472,10 +581,11 @@
 ++  spot-val
   |=  a=[@ @]
   ?>(?=(spot a) a)
-::  #
-::  #  %game
-::  #
-::     (arms for game-specific actions)
+::
+::  %game
+::
+::     Arms for game-specific actions
+::
 +|  %game
 ::
 ++  step
@@ -516,11 +626,12 @@
       ~[[%1 %3] [%2 %2] [%3 %1]]
       ~[[%1 %1] [%2 %2] [%3 %3]]
   ==
-::  #
-::  #  %helpers
-::  #
+::
+::  %helpers
+::
 ::     (TODO: move to /===/lib)
-+|  %help
+::
++|  %helpers
 ::
 ++  switch
   |=  toer=(unit player)
@@ -536,7 +647,11 @@
 ::
 ++  get-icons
   |=  per=player
-  [(get-icon `per) (get-icon `(switch `per))]
+  ::  [$me=tape $ze=tape]
+  ::    $me: the icon of my player
+  ::    $ze: the icon of the opponent (opposite of per)
+  ::
+  [me=(get-icon `per) ze=(get-icon `(switch `per))]
 ::
 ++  toer-to-symbol
   |=  co=cord
@@ -546,4 +661,5 @@
   ?:  =(co 'O')
     %o
   ~
+::
 --
