@@ -111,9 +111,8 @@
     ++  abort           "(!=quit)"
     ++  keep-on         " continue? (Y/N) | "
     ++  confirm         " | play with "
-    ++  continue        txt+" | ready for more? (Y/N) | "
     ++  row-sep         klr+~[[[~ ~ ~] "    ---------"]]
-    ++  no-subscribers  txt+" * no players yet..."
+    ++  no-subscribers  klr+~[[[~ ~ ~] " "] [[```%b] "* no players yet..."]]
     ++  frowned-upon    :-  %klr
                         :~  [[~ ~ ~] " "]
                             :-  [```%y]
@@ -123,14 +122,8 @@
     ++  empties         "                 "
     ++  empty-style     klr+~[[[~ ~ ~] " "]]
     ++  copyright       (trip (tuft `@c`169))
-    ++  spot-taken      :-  %klr
-                        :~  [[~ ~ ~] " "]
-                            [[```%r] "* spot taken"]
-                        ==
-    ++  wait-your-turn  :-  %klr
-                        :~  [[~ ~ ~] " "]
-                            [[```%r] "* wait for your turn"]
-                        ==
+    ++  spot-taken      klr+~[[[~ ~ ~] " "] [[```%r] "* spot taken"]]
+    ++  wait-your-turn  klr+~[[[~ ~ ~] " "] [[```%r] "* wait for your turn"]]
     ::  $clear: clears the screen
     ::
     ++  clear     clr+~
