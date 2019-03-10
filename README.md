@@ -17,7 +17,9 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 - Styled text to print crosses and noughts on board, and game notifications
 ## Network install
 
-    |sync %toe ~norsyr-torryn %toe
+    =toe-server ~figpub-tagdur-landel-falryp--dapnyl-fopluc-masfus-marzod
+    |sync %toe toe-server %toe
+    =dir  /=toe=
 
 ## Local install
 
