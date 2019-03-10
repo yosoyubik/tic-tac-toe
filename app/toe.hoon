@@ -148,13 +148,13 @@
 +|  %state
 ::
 ++  this
-::  Common idiom to refer to our whole %app and its context
-::
-.
+  ::  Common idiom to refer to our whole %app and its context
+  ::
+  .
 ::
 ++  prep
   ::  TODO: we need to treat old state differently,
-  ::    rather than reseting old the time
+  ::    rather than reseting everything all the time
   ::
   |=  old=(unit state)
   ^-  (quip move _this)
