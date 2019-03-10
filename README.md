@@ -18,7 +18,7 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 ## Network install
 There seems to be some issues syncing remote desks, follow the "local install" instructions if you encounter any problems
 
-    ~your-urbit:dojo> =toe-server ~figpub-tagdur-landel-falryp--dapnyl-fopluc-masfus-marzod
+    ~your-urbit:dojo> =toe-server ~habtev-micwyt-togryt-bisleb--fadsut-polryn-bontul-marzod
     ~your-urbit:dojo> |sync %toe toe-server %toe
     ~your-urbit:dojo> =dir  /=toe=
 
