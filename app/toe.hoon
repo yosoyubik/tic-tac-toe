@@ -106,13 +106,14 @@
                             klr+~[[[`%un ~ ~] "A strange game."]]
                             klr+~[[[`%un ~ ~] "They only winning move is not to play."]]
                         ==
-    ++  choose          " | shall we play a game? "
+    ++  choose          " | shall we play a game? (e.g. ~zod) | "
     ++  waiting         " | waiting for "
     ++  abort           "(!=quit)"
     ++  keep-on         " continue? (Y/N) | "
     ++  confirm         " | play with "
+    ++  instruct        klr+~[no-klr [[```%b] "* choose a board position (e.g. 2/2)"]]
     ++  row-sep         klr+~[[[~ ~ ~] "    ---------"]]
-    ++  no-subscribers  klr+~[[[~ ~ ~] " "] [[```%b] "* no players yet..."]]
+    ++  no-subscribers  klr+~[no-klr [[```%b] "* no players yet..."]]
     ++  frowned-upon    :-  %klr
                         :~  [[~ ~ ~] " "]
                             :-  [```%y]
@@ -120,10 +121,11 @@
                         ==
     ++  new-line        txt+""
     ++  empties         "                 "
-    ++  empty-style     klr+~[[[~ ~ ~] " "]]
+    ++  no-klr          [[~ ~ ~] " "]
+    ++  empty-style     klr+~[no-klr]
     ++  copyright       (trip (tuft `@c`169))
-    ++  spot-taken      klr+~[[[~ ~ ~] " "] [[```%r] "* spot taken"]]
-    ++  wait-your-turn  klr+~[[[~ ~ ~] " "] [[```%r] "* wait for your turn"]]
+    ++  spot-taken      klr+~[no-klr [[```%r] "* spot taken"]]
+    ++  wait-your-turn  klr+~[no-klr [[```%r] "* wait for your turn"]]
     ::  $clear: clears the screen
     ::
     ++  clear     clr+~
@@ -242,10 +244,10 @@
   ::
   ++  wait-confirm
     ^-  (quip move _this)
-    =/  try  (rust (tufa buf) (mask "YN"))
+    =/  try  (rust (cass (tufa buf)) (mask "yn"))
     ?~  try
       [~ this]
-    ?:  =(u.try 'N')
+    ?:  =(u.try 'n')
       ::  don't play with this player
       ::
       crash-current-game
@@ -285,6 +287,7 @@
         %-  effect
         :~  %mor
             det+edit
+            instruct
             (prompt (create-dial [ze:guest icons "<-"]))
     ==  ==
   ::
@@ -327,6 +330,8 @@
         :~  %mor
             det+edit
             mor+print-grid
+            mor+falken
+            new-line
             (prompt "{(end-message out)}{keep-on}")
     ==  ==
   ::
@@ -336,10 +341,10 @@
   ::
   ++  continue-replay
     ^-  (quip move _this)
-    =/  try  (rust (tufa buf) (mask "YN"))
+    =/  try  (rust (cass (tufa buf)) (mask "yn"))
     ?~  try
       [~ this]
-    ?:  =(u.try 'N')
+    ?:  =(u.try 'n')
       crash-current-game
     =^  edit  state.consol  (transmit-sole reset)
     =.  game-board  ~
@@ -362,7 +367,7 @@
         %-  effect
         :~  %mor
             det+edit
-            (prompt " | ...waiting for {(cite:title ze.guest)}'s {abort} |")
+            (prompt " | ...waiting for {(cite:title ze.guest)} {abort} |")
     ==  ==
   ::
   --
@@ -448,11 +453,15 @@
     ::
     =.  toers  %-  ~(gas by toers)
                :~  [our.bol [(switch-player `per) %g]]
-                   :-  src.bol
-                   [stone.per (switch-color color.per)]
+                   [src.bol [stone.per %r]]
                ==
     :_  +>.$(game-state %start, who src.bol)
-    ~[(effect (prompt (create-dial [src.bol icons "->"])))]
+    :_  ~
+    %-  effect
+    :~  %mor
+        instruct
+        (prompt (create-dial [src.bol icons "->"]))
+    ==
   ::
       ::  %rematch: game has endend
       ::
@@ -485,7 +494,14 @@
   =/  new-player  [stone=stone.per.tur.win color=(switch-color color.per.tur.win)]
   =^  out  game-board  (step [^-(player new-player) spo.tur.win])
   :_  +>.$(game-state %replay)
-  ~[(effect mor+~[mor+print-grid (prompt "{out.win}{keep-on}")])]
+  :_  ~
+  %-  effect
+  :~  %mor
+      mor+print-grid
+      mor+falken
+      new-line
+      (prompt "{out.win}{keep-on}")
+  ==
 ::
 ::  %send-winner: spams our opponent with the winner move
 ::
