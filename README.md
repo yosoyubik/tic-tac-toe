@@ -16,10 +16,15 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 - Pending requests to play are queued and pulled after current game finishes.
 - Styled text to print crosses and noughts on board, and game notifications
 ## Network install
+There seems to be some issues syncing remote desks, follow the "local install" instructions if you encounter any problems
 
-    |sync %toe ~norsyr-torryn %toe
+    ~your-urbit:dojo> =toe-server ~figpub-tagdur-landel-falryp--dapnyl-fopluc-masfus-marzod
+    ~your-urbit:dojo> |sync %toe toe-server %toe
+    ~your-urbit:dojo> =dir  /=toe=
 
 ## Local install
+
+This might take some time to compile, seat tight!
 
     cp toe/app/toe.hoon /path/to/your-urbit/home/app
     cp -r toe/mar/toe /path/to/your-urbit/home/mar
