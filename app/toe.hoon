@@ -148,13 +148,13 @@
 +|  %state
 ::
 ++  this
-  ::  Common idiom to refer to our whole %app and its context
-  ::
-  .
+::  Common idiom to refer to our whole %app and its context
+::
+.
 ::
 ++  prep
   ::  TODO: we need to treat old state differently,
-  ::    rather than reseting everything all the time
+  ::    rather than reseting old the time
   ::
   |=  old=(unit state)
   ^-  (quip move _this)
@@ -946,7 +946,7 @@
 ::
 ++  switch-player
   |=  toer=(unit player)
-  ^-  ?(cross nought ~)
+  ^-  stone
   ?~  toer  ~
   ?:(=(stone.u.toer %o) %x %o)
 ::

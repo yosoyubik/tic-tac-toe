@@ -2,12 +2,10 @@
 ::::  /sur/toe/hoon
 ::
 |%
-:: +=  grid         [%tan (list [%leaf tape])]
 +=  grid         (list [%klr styx])
 +=  outcome      ?(%wins %tie ~)
-+=  nought       %x
-+=  cross        %o
-+=  player       [stone=?(cross nought ~) color=tint]
++=  stone        ?(%x %o ~)
++=  player       [=stone color=tint]
 +=  num          ?(%1 %2 %3)
 +=  spot         [num num]
 +=  board        (map spot player)
@@ -17,7 +15,7 @@
                  ::  $out: for outgoing subscriptions
                  ::    used when we %peer a ship
                  ::
-                [ze=ship subs=[in=bone out=bone]]
+                 [ze=ship subs=[in=bone out=bone]]
 +=  subscribers  ::  Gall has prey:pubsub:userlib to get the list
                  ::  of subscribers.
                  ::  It uses a
@@ -26,7 +24,7 @@
                  ::  TODO: don't reinvent the wheel and just use
                  ::        the queue to track the order or subs.
                  ::
-                (qeu remote-app)
+                 (qeu remote-app)
 +=  message      ?(%accept %rematch)
 ::
 ::  Marks sent in each move, as defined in %/mar/toe/
