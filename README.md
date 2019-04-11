@@ -1,4 +1,4 @@
-# TIC-TAC-TOE in Urbit
+# TIC-TAC-TOE for Urbit
 
 This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www.youtube.com/watch?v=_acTt4_IXYM&t=225s), based on the [example](https://github.com/joshuareagan/doc-drafts/blob/master/Hoon-Ch2-10.md) written by [Joshua Reagan](http://www.joshuareagan.com/) (aka ~taglux-nidsep)
 
@@ -6,21 +6,15 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 
 ## Features
 
-- Network multiplayer.
+- Network multiplayer
 - Board state printed in the console
 - Structures in `/=home=/sur` and marks for updates
 - Fixes an [issue](https://github.com/urbit/arvo/issues/1100) with removing the head of a queue using a custom library (`%cola`)
 - Notifications for game invitation
 - Uses queue instead of list to keep track of incoming and outgoing subscriptions
   - TODO: Research Gall/Hall to replace this
-- Pending requests to play are queued and pulled after current game finishes.
+- Pending requests are queued and pulled after current game finishes
 - Styled text to print crosses and noughts on board, and game notifications
-## Network install
-There seems to be some issues syncing remote desks, follow the "local install" instructions if you encounter any problems
-
-    ~your-urbit:dojo> =toe-server ~habtev-micwyt-togryt-bisleb--fadsut-polryn-bontul-marzod
-    ~your-urbit:dojo> |sync %toe toe-server %toe
-    ~your-urbit:dojo> =dir  /=toe=
 
 ## Local install
 
@@ -61,11 +55,12 @@ The list of commands are:
 ## TODO
 - Partial board re-paint on each move.
 - Web frontend
+- Integrate with Hall to allow for rooms in chat
 - Single-player mode
 - Send multple requests to multiple ships
 - Don't block game waiting for a confirmation
 - Cancel a specific request from the list of subscribers
-- Write-up a blog post documenting the code
+- Documentation
 
 ## References
 
