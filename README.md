@@ -9,7 +9,7 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 - Network multiplayer
 - Board state printed in the console
 - Structures in `/=home=/sur` and marks for updates
-- ~~Fixes an [issue](https://github.com/urbit/arvo/issues/1100) with removing the head of a queue using a custom library (`%cola`)
+- ~~Fixes an [issue](https://github.com/urbit/arvo/issues/1100) with removing the head of a queue using a custom library (`%cola`)~~
   - Sadly this [didn't fix anything](https://github.com/urbit/arvo/issues/1100#issuecomment-483845590). Better to replace the `+qeu` with a list.
 - Notifications for game invitation
 - Uses queue instead of list to keep track of incoming and outgoing subscriptions
