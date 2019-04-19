@@ -23,64 +23,70 @@
 =>  |%
     +|  %models
     ::
-    +$  state      $:  ::
-                       ::  $game-state: current game state (see %/sur/toe/hoon)
-                       ::
-                       game-state=game
-                       ::
-                       ::  $game-board: game internal board
-                       ::
-                       game-board=board
-                       ::
-                       ::  $consol: console state
-                       ::
-                       ::     $conn: number id for console connection
-                       ::     $state: console's state (from sole-share)
-                       ::
-                       consol=[conn=bone state=sole-share:sole]
-                       ::
-                       ::  $toers: each player has an icon (%x or %o)
-                       ::
-                       toers=(map ship player)
-                       ::
-                       ::  $me: alias for player's identity
-                       ::    (instead of src.bol)
-                       ::    FIXME: use =* instead?
-                       ::
-                       me=ship
-                       ::
-                       ::  $who: player that owns the turn
-                       ::                       ::
-                       who=ship
-                       ::
-                       ::  %next: flag to indicate a replay
-                       ::
-                       next=?
-                       ::
-                       ::  $opos: queue of players waiting to play
-                       ::
-                       ::    TODO: explore $bitt: (map bone (pair ship path))
-                       ::          (more info in %/sur/toe/hoon)
-                       ::
-                       opos=subscribers
-                   ==
-    +$  move       (pair bone card)
-    +$  card       $%  [%diff diff-data]
-                       [%peer wire dock path]
-                       [%pull wire dock ~]
-                       [%poke wire dock poke-data]
-                       [%wait wire p=@da]
-                   ==
-    +$  diff-data  $%  ::  See %/mar/toe/* for specific details
-                       ::    * = [turno, player, winner]
-                       ::
-                       [%toe-turno toe-turno]
-                       [%toe-player toe-player]
-                       [%toe-winner toe-winner]
-                       ::  $sole-effect: console specific move
-                       ::
-                       [%sole-effect sole-effect:sole]
-                   ==
+    +$  state
+      $:  ::
+          ::  $game-state: current game state (see %/sur/toe/hoon)
+          ::
+          game-state=game
+          ::
+          ::  $game-board: internal board for our game [@ @] -> icon
+          ::
+          game-board=board
+          ::
+          ::  $consol: console state
+          ::
+          ::     $conn:  id for console connection
+          ::     $state: console's state (from sole-share)
+          ::
+          consol=[conn=bone state=sole-share:sole]
+          ::
+          ::  $toers: each player has an icon (%x or %o)
+          ::
+          toers=(map ship player)
+          ::
+          ::  $me: alias for player's identity
+          ::    (instead of src.bol)
+          ::    FIXME: use =* instead?
+          ::
+          me=ship
+          ::
+          ::  $who: player that owns the turn
+          ::                       ::
+          who=ship
+          ::
+          ::  %next: flag to indicate a replay
+          ::
+          next=?
+          ::
+          ::  $opos: queue of players waiting to play
+          ::
+          ::    TODO: explore $bitt: (map bone (pair ship path))
+          ::          (more info in %/sur/toe/hoon)
+          ::
+          opos=subscribers
+      ==
+    +$  move
+      (pair bone card)
+    +$  card
+      $%  [%diff diff-data]
+          [%peer wire dock path]
+          [%pull wire dock ~]
+          [%poke wire dock poke-data]
+          [%wait wire p=@da]
+      ==
+    +$  diff-data
+      $%  ::  See %/mar/toe/* for specific details
+          ::    * = [turno, player, winner]
+          ::
+          ::    FIXME: replace wiht =toe-{mark} ?
+          ::
+          [%toe-turno toe-turno]
+          [%toe-player toe-player]
+          [%toe-winner toe-winner]
+          ::  $sole-effect: console specific move
+          ::
+          [%sole-effect sole-effect:sole]
+       ==
     +$  poke-data  [%toe-cancel toe-cancel]
     ::  FIXME: $spot has to be redefined
     ::     even though it's already in sur...
@@ -89,36 +95,41 @@
     ::
     +|  %constants
     ::
-    ++  welcome         :-  %klr
-                        :~  [[~ ~ ~] "   "]
-                            [[`%un ~ ~] "Tic-Tac-Toe"]
-                            [[~ ~ ~] "   "]
-                        ==
+    ++  welcome
+      :-  %klr
+      :~  [[~ ~ ~] "   "]
+          [[`%un ~ ~] "Tic-Tac-Toe"]
+          [[~ ~ ~] "   "]
+      ==
     ++  brought-by      "brought to you by W.O.P.R {copyright}  "
     ++  wopr            txt+(weld empties brought-by)
-    ++  falken-tan      :-  %tan
-                        %-  flop
-                        :~  leaf+" Greetings professor Falken."
-                            leaf+" A strange game."
-                            leaf+" They only winning move is not to play."
-                        ==
-    ++  falken          :~  klr+~[[[`%un ~ ~] "Greetings professor Falken."]]
-                            klr+~[[[`%un ~ ~] "A strange game."]]
-                            klr+~[[[`%un ~ ~] "They only winning move is not to play."]]
-                        ==
+    ++  falken-tan
+      :-  %tan
+      %-  flop
+      :~  leaf+" Greetings professor Falken."
+          leaf+" A strange game."
+          leaf+" They only winning move is not to play."
+      ==
+    ++  falken
+      :~  klr+~[[[`%un ~ ~] "Greetings professor Falken."]]
+          klr+~[[[`%un ~ ~] "A strange game."]]
+          klr+~[[[`%un ~ ~] "They only winning move is not to play."]]
+      ==
     ++  choose          " | shall we play a game? (e.g. ~zod) | "
     ++  waiting         " | waiting for "
     ++  abort           "(!=quit)"
     ++  keep-on         " continue? (Y/N) | "
     ++  confirm         " | play with "
-    ++  instruct        klr+~[no-klr [[```%b] "* choose a board position (e.g. 2/2)"]]
+    ++  instruct
+      klr+~[no-klr [[```%b] "* choose a board position (e.g. 2/2)"]]
     ++  row-sep         klr+~[[[~ ~ ~] "    ---------"]]
     ++  no-subscribers  klr+~[no-klr [[```%b] "* no players yet..."]]
-    ++  frowned-upon    :-  %klr
-                        :~  [[~ ~ ~] " "]
-                            :-  [```%y]
-                            "* playing with yourself is frowned upon... "
-                        ==
+    ++  frowned-upon
+      :-  %klr
+      :~  [[~ ~ ~] " "]
+          :-  [```%y]
+          "* playing with yourself is frowned upon... "
+      ==
     ++  new-line        txt+""
     ++  empties         "                 "
     ++  no-klr          [[~ ~ ~] " "]
@@ -148,9 +159,9 @@
 +|  %state
 ::
 ++  this
-::  Common idiom to refer to our whole %app and its context
-::
-.
+  ::  Common idiom to refer to our whole %app door and its context
+  ::
+  .
 ::
 ++  prep
   ::  TODO: we need to treat old state differently,
@@ -229,7 +240,8 @@
       :_  this
       ~[(effect frowned-upon)]
     =^  edit  state.consol  (transmit-sole reset)
-    =/  new-prompt  (prompt "{waiting}{(scow %p u.try)} {abort} | ")
+    =/  new-prompt
+    (prompt "{waiting}{(scow %p u.try)} {abort} | ")
     :_  ::  $in=0: we haven't received a subscribe back yet so
         ::  by convention we assign 0 to the incoming subscription
         ::
@@ -264,7 +276,8 @@
     =/  defaults  ~[[me [%x %g]] [ze.guest [%o %r]]]
     =.  toers  (~(gas by toers) defaults)
     =/  icons  (get-icons ->.defaults)
-    =/  new-opos  [~(nap cola opos) [ze.guest [in.subs.guest ost.bol]]]
+    =/  new-opos
+    [~(nap cola opos) [ze.guest [in.subs.guest ost.bol]]]
     ::  cleans up the prompt
     ::
     =^  edit  state.consol  (transmit-sole reset)
@@ -403,13 +416,13 @@
   ::
   :_  this(opos (~(put to `subscribers`opos) invite))
   ~[(effect klr+[[[```%b] " [ {guest} wants to play ]"] ~])]
-  ::  FIXME: this is supposed to show log mesasges in the prompt that
+  ::  FIXME: this is supposed to show log messages in the prompt that
   ::    are later wiped out by the +wake arm but we got a:
   ::    [%receive-sync [%his 5 4] %own 4 4]
   ::
   :: =/  request  ^-(sole-edit set+(tuba " [{guest} wants to play] "))
   :: =^  edit  state.consol  (transmit-sole request)
-  :: :_  this(opos (~(put to `subscribers`opos) invite))            :: save request to play
+  :: :_  this(opos (~(put to `subscribers`opos) invite))
   :: :~  (effect det+edit)
   ::     [ost.bol %wait / `@da`(add now.bol ~s3)]
   :: ==
@@ -491,8 +504,9 @@
   ^-  (quip move _+>)
   ::  puts the winner move on the board
   ::
-  =/  new-player  [stone=stone.per.tur.win color=(switch-color color.per.tur.win)]
-  =^  out  game-board  (step [^-(player new-player) spo.tur.win])
+  =/  new-player
+  [stone=stone.per.tur.win color=(switch-color color.per.tur.win)]
+  =^  out  game-board  (step [new-player spo.tur.win])
   :_  +>.$(game-state %replay)
   :_  ~
   %-  effect
@@ -516,8 +530,9 @@
   ^-  (quip move _+>.$)
   ::  puts the opponent's move on the  board
   ::
-  =/  new-player  [stone=stone.per.tur color=(switch-color color.per.tur)]
-  =^  out  game-board  (step [^-(player new-player) spo.tur])
+  =/  new-player
+  [stone=stone.per.tur color=(switch-color color.per.tur)]
+  =^  out  game-board  (step [new-player spo.tur])
   ::  %get-icons expected the player to be ours
   ::    but per.tur is our opponent, so we switch
   ::
@@ -544,10 +559,12 @@
 ++  send-unsubscribe
   |=  guest=remote-app
   ^-  (quip move _this)
-  =/  peer-move  [out.subs.guest %pull /join-game [ze.guest dap.bol] ~]
+  =/  peer-move
+  [out.subs.guest %pull /join-game [ze.guest dap.bol] ~]
   =^  edit  state.consol  (transmit-sole reset)
   =.  game-board  ~
-  =/  effects  ~[det+edit clear welcome new-line mor+print-grid (prompt choose)]
+  =/  effects
+  ~[det+edit clear welcome new-line mor+print-grid (prompt choose)]
   ?~  ~(nap cola opos)
     (wipe ~[(effect mor+effects) peer-move])
   =/  new-guest  (cite:title ze:(need ~(top cola ~(nap cola opos))))
@@ -560,8 +577,7 @@
       :~  %mor
           det+edit
           (prompt "{confirm}{new-guest} (Y/N)? | ")
-      ==
-  ==
+  ==  ==
 ::
 ::  $pull-back: handles logic for ending subscriptions
 ::
@@ -578,7 +594,6 @@
   ::    FIXME: is this even necessary?
   ::
   ?~  opos  [~ this]
-  :: =/  leaving-guest  (need ~(top cola opos))
   =/  shortened-ship  (cite:title src.bol)
   =/  out  klr+~[[[```%b] " [{shortened-ship} cancelled your game...]"]]
   ?~  ~(nap cola opos)
@@ -586,9 +601,8 @@
     ::  FIXME: we send the edit in two cases (duplicated code)
     ::
     =^  edit  state.consol  (transmit-sole reset)
-    ::  FIXME: this needs to be shortened
-    ::
-    =/  effects  ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
+    =/  effects
+    ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
     ::  if we had only one opponent in the queue, reset
     ::
     (wipe ~[(effect mor+effects)])
@@ -621,22 +635,24 @@
           det+edit
           out
           (prompt "{confirm}{new-guest} (Y/N)? |  ")
-      ==
-  ==
+  ==  ==
 ::
 ::  $send-cancel: sends a manual cancel to a ship that peered us
 ::
 ++  send-cancel
   |=  guest=remote-app
   ^-  (quip move _this)
-  =/  poke-move  [ost.bol %poke /cancel [ze.guest dap.bol] [%toe-cancel %bye]]
+  =/  poke-move
+  [ost.bol %poke /cancel [ze.guest dap.bol] [%toe-cancel %bye]]
   =^  edit  state.consol  (transmit-sole reset)
   =/  tabla  mor+print-grid
-  =/  effects  ~[det+edit clear welcome new-line tabla (prompt choose)]
+  =/  effects
+  ~[det+edit clear welcome new-line tabla (prompt choose)]
   ?~  ~(nap cola opos)
     (wipe ~[(effect mor+effects) poke-move])
   =/  rest-q  ~(nap cola opos)
-  =/  new-guest  (cite:title ze:(need ~(top cola rest-q)))
+  =/  new-guest
+  (cite:title ze:(need ~(top cola rest-q)))
   :_  %=  this
         game-board  ~
         game-state  %confirm
@@ -669,13 +685,15 @@
   ::
   =/  current-guest  (need ~(top cola opos))
   =/  shortened-ship  (cite:title ze.current-guest)
-  =/  out  klr+~[[[```%b] " [{shortened-ship} cancelled your game...] "]]
+  =/  out
+  klr+~[[[```%b] " [{shortened-ship} cancelled your game...] "]]
   =^  edit  state.consol  (transmit-sole reset)
   ?~  ~(nap cola opos)
     ::  if we had only one opponent in the queue, reset
     ::    $effects: FIXME (this needs to be shortened)
     ::
-    =/  effects  ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
+    =/  effects
+    ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
     (wipe ~[(effect mor+effects)])
   =/  rest-q  ~(nap cola opos)
   =/  new-guest  (cite:title ze:(need ~(top cola rest-q)))
@@ -728,17 +746,20 @@
     $ret  ?~  buf.share  [~ this]
           ::  checks for a restart game command
           ::
-          =/  restart  (rust (tufa buf.share) ;~(just zap))
+          =/  restart
+          (rust (tufa buf.share) ;~(just zap))
           ?.  =(~ restart)  crash-current-game
           ::  checks for a "list waiting opponents" command
           ::
-          =/  list  (rust (tufa buf.share) ;~(just (just 'l')))
+          =/  list
+          (rust (tufa buf.share) ;~(just (just 'l')))
           ?.  =(~ list)  list-subscribers
           ::  %egg
           ::
-          ::    ?
+          ::    ...?
           ::
-          =/  egg  (rust (tufa buf.share) ;~(just (jest (crip "joshua"))))
+          =/  egg
+          (rust (tufa buf.share) ;~(just (jest (crip "joshua"))))
           ?.  =(~ egg)  easter-egg
           ::  based on the current state, a different engine arm is called
           ::
@@ -757,7 +778,7 @@
               %replay    ~(continue-replay ge buf.share)
           ==
     ::  $det: key press
-    ::    FIXME: when code updats, it errors here:
+    ::    FIXME: when code updates, it errors here:
     ::           lib/sole/hoon:<[103 5].[103 7]>
     ::           [%drum-coup-fail ~zod 1 p=~zod q=%toe]
     ::
@@ -818,8 +839,8 @@
   :-  %klr
   |-  ^-  styx
   =/  symbol  (~(get by game-board) [row col])
-  =/  stone  (get-icon symbol)
-  =/  color  (get-color symbol)
+  =/  stone   (get-icon symbol)
+  =/  color   (get-color symbol)
   ?:  &(=(%4 col))
     ~
   :-  ?:  &(=(col %1))
@@ -849,10 +870,10 @@
     [~[(effect mor+~[det+edit no-subscribers])] this]
   :_  this
   :~  %-  effect
-          :~  %mor
-              (queue-to-list opos)
-              det+edit
-  ==      ==
+      :~  %mor
+          (queue-to-list opos)
+          det+edit
+  ==  ==
 ::
 ++  crash-current-game
   ^-  (quip move _this)
@@ -977,7 +998,6 @@
 ++  get-icons
   |=  per=player
   ^-  [tape tape]
-  ::  [$me=tape $ze=tape]
   ::    $me: the icon of my player
   ::    $ze: the icon of the opponent (opposite of per)
   ::
