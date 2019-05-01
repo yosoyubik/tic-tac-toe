@@ -58,6 +58,7 @@ The list of commands are:
 - Web frontend
 - Integrate with Hall to allow for rooms in chat
 - Single-player mode
+- Refactor marks, wires & paths
 - Send multple requests to multiple ships
 - Don't block game waiting for a confirmation
 - Cancel a specific request from the list of subscribers
