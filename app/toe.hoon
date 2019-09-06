@@ -1,22 +1,10 @@
-::
-::
-::::  /hoon/toe/app
-::
-::
-::  zuse version
-::
-/?  310
-::  toe structures
+::  Tic-Tac-Toe
 ::
 /-  toe
-::  libraries
-::
 /+  cola, sole
-::  exposes namespace
-::
-[. toe sole]
+=,  toe
 =,  cola
-::  stack trace on
+=,  sole
 ::
 !:
 ::
@@ -38,7 +26,7 @@
           ::     $conn:  id for console connection
           ::     $state: console's state (from sole-share)
           ::
-          consol=[conn=bone state=sole-share:sole]
+          consol=[conn=bone state=sole-share]
           ::
           ::  $toers: each player has an icon (%x or %o)
           ::
@@ -65,8 +53,10 @@
           ::
           opos=subscribers
       ==
+    ::
     +$  move
       (pair bone card)
+    ::
     +$  card
       $%  [%diff diff-data]
           [%peer wire dock path]
@@ -74,6 +64,7 @@
           [%poke wire dock poke-data]
           [%wait wire p=@da]
       ==
+    ::
     +$  diff-data
       $%  ::  See %/mar/toe/* for specific details
           ::    * = [turno, player, winner]
@@ -85,13 +76,14 @@
           [%toe-winner toe-winner]
           ::  $sole-effect: console specific move
           ::
-          [%sole-effect sole-effect:sole]
+          [%sole-effect sole-effect]
        ==
+    ::
     +$  poke-data  [%toe-cancel toe-cancel]
     ::  FIXME: $spot has to be redefined
     ::     even though it's already in sur...
     ::
-    +$  spot  [num num]
+    +$  spot  [coord coord]
     ::
     +|  %constants
     ::
@@ -101,6 +93,7 @@
           [[`%un ~ ~] "Tic-Tac-Toe"]
           [[~ ~ ~] "   "]
       ==
+    ::
     ++  brought-by      "brought to you by W.O.P.R {copyright}  "
     ++  wopr            txt+(weld empties brought-by)
     ++  falken-tan
@@ -111,11 +104,33 @@
           leaf+" They only winning move is not to play."
       ==
     ++  falken
+      :-  %falken
       :~  klr+~[[[`%un ~ ~] "Greetings professor Falken."]]
           klr+~[[[`%un ~ ~] "A strange game."]]
           klr+~[[[`%un ~ ~] "They only winning move is not to play."]]
+          empty-style
+          klr+~[[[`%un ~ ~] "How about a nice game of chess?"]]
       ==
-    ++  choose          " | shall we play a game? (e.g. ~zod) | "
+    ++  joshua
+      :~  klr+~[no-klr [unline "FALKEN'S MAZE"]]
+          klr+~[no-klr [unline "BLACK JACK"]]
+          klr+~[no-klr [unline "GIN RUMMY"]]
+          klr+~[no-klr [unline "HEARTS"]]
+          klr+~[no-klr [unline "BRIDGE"]]
+          klr+~[no-klr [unline "CHECKERS"]]
+          klr+~[no-klr [unline "CHESS"]]
+          klr+~[no-klr [unline "POKER"]]
+          klr+~[no-klr [unline "FIGHTER COMBAT"]]
+          klr+~[no-klr [unline "GUERRILLA ENGAGEMENT"]]
+          klr+~[no-klr [unline "DESERT WARFARE"]]
+          klr+~[no-klr [unline "AIR-TO-GROUND ACTIONS"]]
+          klr+~[no-klr [unline "THEATERWIDE TACTICAL WARFARE"]]
+          klr+~[no-klr [unline "THEATERWIDE BIOTOXIC AND CHEMICAL WARFARE"]]
+          empty-style
+          klr+~[no-klr [[`%un ~ `%r] "GLOBAL THERMONUCLEAR WAR"]]
+       ==
+    ++  shall-we        klr+~[[[`%un ~ ~] "shall we play a game?"]]
+    ++  choose          " | enter @p (e.g. ~zod) | "
     ++  waiting         " | waiting for "
     ++  abort           "(!=quit)"
     ++  keep-on         " continue? (Y/N) | "
@@ -132,7 +147,8 @@
       ==
     ++  new-line        txt+""
     ++  empties         "                 "
-    ++  no-klr          [[~ ~ ~] " "]
+    ++  no-klr          [[~ ~ ~] "    "]
+    ++  unline          [`%un ~ ~]
     ++  empty-style     klr+~[no-klr]
     ++  copyright       (trip (tuft `@c`169))
     ++  spot-taken      klr+~[no-klr [[```%r] "* spot taken"]]
@@ -343,7 +359,7 @@
         :~  %mor
             det+edit
             mor+print-grid
-            mor+falken
+            ?:(=(out %tie) [falken bel+~] bel+~)
             new-line
             (prompt "{(end-message out)}{keep-on}")
     ==  ==
@@ -512,7 +528,7 @@
   %-  effect
   :~  %mor
       mor+print-grid
-      mor+falken
+      ?:(=(out %tie) [falken bel+~] bel+~)
       new-line
       (prompt "{out.win}{keep-on}")
   ==
@@ -530,8 +546,7 @@
   ^-  (quip move _+>.$)
   ::  puts the opponent's move on the  board
   ::
-  =/  new-player
-  [stone=stone.per.tur color=(switch-color color.per.tur)]
+  =/  new-player  [stone.per.tur (switch-color color.per.tur)]
   =^  out  game-board  (step [new-player spo.tur])
   ::  %get-icons expected the player to be ours
   ::    but per.tur is our opponent, so we switch
@@ -563,10 +578,10 @@
   [out.subs.guest %pull /join-game [ze.guest dap.bol] ~]
   =^  edit  state.consol  (transmit-sole reset)
   =.  game-board  ~
-  =/  effects
-  ~[det+edit clear welcome new-line mor+print-grid (prompt choose)]
+  :: =/  effects
+  :: ~[det+edit clear welcome new-line mor+print-grid shall-we (prompt choose)]
   ?~  ~(nap cola opos)
-    (wipe ~[(effect mor+effects) peer-move])
+    (wipe ~[(effect (all-effects edit)) peer-move])
   =/  new-guest  (cite:title ze:(need ~(top cola ~(nap cola opos))))
   :_  %=  this
         opos  ~(nap cola opos)
@@ -601,11 +616,11 @@
     ::  FIXME: we send the edit in two cases (duplicated code)
     ::
     =^  edit  state.consol  (transmit-sole reset)
-    =/  effects
-    ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
+    :: =/  effects
+    :: ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
     ::  if we had only one opponent in the queue, reset
     ::
-    (wipe ~[(effect mor+effects)])
+    (wipe ~[(effect (all-effects edit))])
   ::  we need to find who in the queue unsubscribed
   ::    we only need src.bol, we bunt the in/out bones
   ::
@@ -642,23 +657,23 @@
 ++  send-cancel
   |=  guest=remote-app
   ^-  (quip move _this)
-  =/  poke-move
-  [ost.bol %poke /cancel [ze.guest dap.bol] [%toe-cancel %bye]]
+  =/  cancel-move
+    [ost.bol %poke /cancel [ze.guest dap.bol] [%toe-cancel %bye]]
   =^  edit  state.consol  (transmit-sole reset)
   =/  tabla  mor+print-grid
-  =/  effects
-  ~[det+edit clear welcome new-line tabla (prompt choose)]
+  :: =/  effects  ^-  (list sole-effect)
+  :: ~[det+edit clear welcome new-line tabla (prompt choose)]
   ?~  ~(nap cola opos)
-    (wipe ~[(effect mor+effects) poke-move])
+    (wipe ~[(effect ^-(sole-effect (all-effects edit))) cancel-move])
   =/  rest-q  ~(nap cola opos)
   =/  new-guest
-  (cite:title ze:(need ~(top cola rest-q)))
+    (cite:title ze:(need ~(top cola rest-q)))
   :_  %=  this
+        opos        rest-q
         game-board  ~
         game-state  %confirm
-        opos  rest-q
       ==
-  :~  poke-move
+  :~  cancel-move
       %-  effect
       :~  %mor
           det+edit
@@ -692,9 +707,9 @@
     ::  if we had only one opponent in the queue, reset
     ::    $effects: FIXME (this needs to be shortened)
     ::
-    =/  effects
-    ~[det+edit clear out welcome new-line mor+print-grid (prompt choose)]
-    (wipe ~[(effect mor+effects)])
+    :: =/  effects
+    :: ~[det+edit clear out welcome new-line mor+print-grid shall-we (prompt choose)]
+    (wipe ~[(effect (all-effects edit))])
   =/  rest-q  ~(nap cola opos)
   =/  new-guest  (cite:title ze:(need ~(top cola rest-q)))
   :_  %=  this
@@ -717,7 +732,7 @@
   |=  a=@
   ^-  (quip move _+>)
   %-  wipe
-  ~[(effect mor+~[clear welcome new-line mor+print-grid (prompt choose)])]
+  ~[(effect mor+~[clear welcome new-line mor+print-grid shall-we (prompt choose)])]
 ::
 ++  coup
   |=  [wir=wire err=(unit tang)]
@@ -791,16 +806,29 @@
 ++  peer-sole
   |=  path
   ^-  (quip move _this)
-  =.  consol  [ost.bol *sole-share:sole]
+  =.  consol  [ost.bol *sole-share]
   :_  this
   :~  %-  effect
-      mor+~[clear welcome wopr mor+print-grid (prompt choose)]
+      mor+~[clear welcome wopr mor+print-grid shall-we (prompt choose)]
   ==
 ::
 ++  effect
-  |=  fec=sole-effect:sole
+  |=  fec=sole-effect
   ^-  move
   [conn.consol %diff %sole-effect fec]
+::
+++  all-effects
+  |=  =sole-change
+  ^-  sole-effect
+  :-  %mor
+  :~  det+sole-change
+      clear
+      welcome
+      new-line
+      mor+print-grid
+      shall-we
+      (prompt choose)
+  ==
 ::
 ++  transmit-sole
   |=  inv=sole-edit
@@ -811,7 +839,7 @@
 ::
 ++  prompt
   |=  dial=styx
-  ^-  sole-effect:sole
+  ^-  sole-effect
   pro+[& %$ dial]
 ::
 ++  create-dial
@@ -819,6 +847,7 @@
   ::    we are dealing with a comet
   ::
   |=  [guest=ship icons=[me=tape ze=tape] arrow=tape]
+  ^-  styx
   :~  [[~ ~ ~] " | "]
       [[~ ~ ~] "{(cite:title me)}"]
       [[~ ~ ~] ":["]
@@ -833,28 +862,29 @@
 ::  $print-row: pretty prints a row of the board displayed on the console
 ::
 ++  print-row
-  |=  row=@
-  ^-  [%klr styx]
-  =/  col  1
+  |=  row=coord
+  ^-  sole-effect
+  =/  col=coord  %1
   :-  %klr
   |-  ^-  styx
   =/  symbol  (~(get by game-board) [row col])
   =/  stone   (get-icon symbol)
   =/  color   (get-color symbol)
-  ?:  &(=(%4 col))
-    ~
-  :-  ?:  &(=(col %1))
+  :-  ?:  =(col %1)
         [[~ ~ ~] "    "]
       [[~ ~ ~] "| "]
-  [[[~ ~ `color] "{stone} "] $(col (add col 1))]
+  :_  ?:  =(col %3)  ~
+    $(col (coord +(col)))
+  [[~ ~ `color] "{stone} "]
 ::
 ::  $print-grid: pretty prints the board displayed on the console
 ::
 ++  print-grid
-  ^-  grid
-  :~  (print-row 1)  row-sep
-      (print-row 2)  row-sep
-      (print-row 3)
+  ^-  (list sole-effect)
+  :: ^-  (list @)
+  :~  (print-row %1)  row-sep
+      (print-row %2)  row-sep
+      (print-row %3)
       empty-style
   ==
 ::
@@ -1084,6 +1114,6 @@
 ++  easter-egg
   ^-  (quip move _this)
   =^  edit  state.consol  (transmit-sole reset)
-  [~[(effect mor+~[mor+falken det+edit])] this]
+  [~[(effect mor+~[mor+joshua det+edit])] this]
 ::
 --
