@@ -9,10 +9,8 @@ This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www
 - Network multiplayer
 - Board state printed in the console
 - Structures in `/=home=/sur` and marks for updates
-- ~~Fixes an [issue](https://github.com/urbit/arvo/issues/1100) with removing the head of a queue using a custom library (`%cola`)~~
-  - Sadly this [didn't fix anything](https://github.com/urbit/arvo/issues/1100#issuecomment-483845590). Better to replace the `+qeu` with a list.
 - Notifications for game invitation
-- Uses queue instead of list to keep track of incoming and outgoing subscriptions
+- Uses a list to keep track of incoming and outgoing subscriptions
   - TODO: Research Gall/Hall to replace this
 - Pending requests are queued and pulled after current game finishes
 - Styled text to print crosses and noughts on board, and game notifications
@@ -24,7 +22,6 @@ This might take some time to compile, seat tight!
     cp toe/app/toe.hoon /path/to/your-urbit/home/app
     cp -r toe/mar/toe /path/to/your-urbit/home/mar
     cp toe/sur/toe.hoon /path/to/your-urbit/home/sur
-    cp toe/lib/cola.hoon /path/to/your-urbit/home/lib
 
 ## Start playing!!
 
@@ -41,7 +38,7 @@ The list of commands are:
   - ![list|20%](subs.png)
 - `'1/1'`: board coordinates (`[1-3/1-3]`)
   - Only if the prompt is `| ~zod:[X] <- ~dev:[O] |`
-- `'Y'`: confirm/reject request to play `[Y/N]`
+- `'Y/y or N/n'`: confirm/reject request to play `[Y/N]`
   - Only if the prompt is:
     - `| ~zod wins! continue? (Y/N) |`
     - `| waiting for ~zod (!=quit) |`
