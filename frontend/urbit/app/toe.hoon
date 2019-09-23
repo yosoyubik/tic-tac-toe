@@ -1,11 +1,7 @@
 ::  Tic-Tac-Toe
 ::
-/+  *server
 /-  toe
-/+  sole
-=,  toe
-=,  sole
-=,  format
+/+  sole, *server
 ::
 :: This imports the tile's JS file from the file system as a variable.
 /=  tile-js
@@ -16,10 +12,16 @@
       /~  ~
   ==
 ::
+=,  toe
+=,  sole
+=,  format
+::
 !:
 ::
 =>  |%
+    ::
     +|  %models
+    ::
     +$  state
       $:  ::  see (see %/sur/toe/hoon)
           ::
@@ -30,15 +32,20 @@
           ::  $who: player that can perform a move
           ::
           who=ship
-          ::  %next: flag to indicate a replay
+          ::  $next: flag to indicate a replay
           ::
           next=?
+          ::
+          ::  $front: id for frontend connection
+          ::
+          front=bone
           ::  $consol: console state
           ::
           ::     $conn:  id for console connection
           ::     $state: what's in the console
           ::
           consol=[conn=bone state=sole-share]
+          ::consol=[conn=bone state=sole-share]
       ==
     ::
     +$  move  (pair bone card)
@@ -121,21 +128,21 @@
       --
   |=  old=(unit states)
   ^-  (quip move _this)
-  =/  launcha/poke
+  =/  launcha=poke-data
     [%launch-action [%toe /toetile '/~toe/js/tile.js']]
-  ?~  old
-    ::  we haven't modified the previous state
-    ::
-    =-  (wipe -)
+  =/  moves=(list move)
     :~  :: %connect here tells %eyre to mount at the /~toe endpoint.
         [ost.bol %connect / [~ /'~toe'] %toe]
         [ost.bol %poke /toe [our.bol %launch] launcha]
     ==
+  ?~  old
+    ::  we haven't modified the previous state
+    ::
+    (wipe moves)
   ::  the old state needs to be adapted to the new one
   ::
   ?-  -.u.old
-    %0  :_  this(sat s.u.old)
-        [ost.bol %poke /toe [our.bol %launch] launcha]~
+    %0  (restore s.u.old moves)
   ==
 ::
 ++  wipe
@@ -153,16 +160,10 @@
 ::  TODO: something needs to be fixed here...
 ::
 ++  restore
-  |=  [moves=(list move) state]
+  |=  [s=state moves=(list move)]
   ^-  (quip move _this)
   :-  moves
-  %=  this
-      subs.sat   ~
-      toers.sat  ~
-      board.sat  ~
-      next.sat   %.n
-      game.sat   %select-opponent
-  ==
+  this(sat s)
 ::
 ::  After timer kicks, we reset the prompt, cleaning the log message
 ::    FIXME: breaks %sole, more research needed...
@@ -181,7 +182,26 @@
 ::
 ++  ge
   ::
-  |_  buf=sole-buffer
+  |_  buf=(list @c)
+  ::
+  ::  %processes user action
+  ::
+  ++  action
+    ~&  game.sat^buf
+    ?-    game.sat
+        ::  Game Engine Step 1: selects opponent
+        ::
+        %select-opponent  select-opponent
+        ::  Game Engine Step 2: waits for confirmation
+        ::
+        %confirm          wait-confirm
+        ::  Game Engine Step 3: moves start
+        ::
+        %start            moves-start
+        ::  Game Engine Step 4: game ends, waits for end/continue?
+        ::
+        %replay           continue-replay
+    ==
   ::
   ::  $select-opponent: step 1
   ::    sends a request to play to opponent (e.g. ~zod)
@@ -196,17 +216,32 @@
     ?~  try
       [~ this]
     ?:  =(u.try me)
+      =/  front-error
+        :~  [%status s+'error']
+            [%message (tape:enjs:format +>->.frowned-upon)]
+        ==
       :_  this
-      ~[(effect frowned-upon)]
+      :~  (effect frowned-upon)
+          (send-tile-diff front-error)
+          :: [front.sat %diff %json (front-error +>->.frowned-upon)]
+      ==
     =^  edit  state.consol.sat  (transmit-sole reset)
     =/  new-prompt
-    (prompt "{waiting}{(scow %p u.try)} {abort} | ")
-    :_  ::  $in=0: we haven't received a subscribe back yet so
-        ::  by convention we assign 0 to the incoming subscription
-        ::
-        this(subs.sat (snoc subs.sat [u.try [in=0 out=ost.bol]]))
+      (prompt "{waiting}{(scow %p u.try)} {abort} | ")
+    =/  front-message=(list [@t json])
+      :~  [%message s+(scot %p u.try)]
+          [%status s+'select-opponent']
+      ==
+    ::  $in=0: we haven't received a subscribe back yet so
+    ::  by convention we assign 0 to the incoming subscription
+    ::
+    ~&  prey+(prey:pubsub:userlib /toetile bol)
+    ~&  ost+ost.bol
+    :_  this(subs.sat (snoc subs.sat [u.try [in=0 out=ost.bol]]))
     :~  (effect mor+~[det+edit new-prompt])
         [ost.bol %peer /join-game [u.try dap.bol] /invite]
+        (send-tile-diff front-message)
+        :: [front.sat %diff %json (pairs:enjs:format front-message)]
     ==
   ::
   ::  $wait-confirm: step 2
@@ -251,6 +286,16 @@
         ::    TODO: research 2-way subscription model with Hall
         ::
         [ost.bol %peer /join-game [ze.guest dap.bol] /back]
+        =/  front-message=(list [@t json])
+          :~  [%stone s+(crip -.icons)]
+              [%current s+(scot %p me)]
+              [%status s+'start']
+          ==
+        ::  We unlock the confirmation state and start the game
+        ::  We own the turn and can put moves on the board
+        ::
+        (send-tile-diff front-message)
+        :: [front.sat %diff %json (pairs:enjs:format front-message)]
         ::  We send $accept to our subscriber with our icon
         ::    ->.default = [%x %g]
         ::
@@ -270,6 +315,9 @@
     ^-  (quip move _this)
     =/  try  (rust (tufa buf) position)
     ?~  try
+      ~&  %nothing
+      ~&  (tufa buf)
+      ~&  (rust (tufa buf) position)
       [~ this]
     ?.   =(our.bol who.sat)
       :_  this
@@ -370,13 +418,17 @@
   ::  by convention we assign 0 to the out subs
   ::
   =/  invite  [ze [ost.bol 0]]
+  =/  front-message=(list [@t json])
+    :~  [%message s+(crip guest)]
+        [%status s+'confirm']
+    ==
   ?~  subs.sat
-    :-  ~[(effect (prompt "{confirm}{guest}? (Y/N) | "))]
-    %=  this
-      ::  first invite goes into the subscribers queue
-      ::
-      subs.sat  [invite ~]
-      game.sat  %confirm
+    ::  first invite goes into the subscribers queue
+    ::
+    :_  this(subs.sat ~[invite], game.sat %confirm)
+    :~  (effect (prompt "{confirm}{guest}? (Y/N) | "))
+        (send-tile-diff front-message)
+        :: [front.sat %diff %json (pairs:enjs:format front-message)]
     ==
   :_  this(subs.sat (snoc subs.sat invite))
   ~[(effect klr+[[[```%b] " [ {guest} wants to play ]"] ~])]
@@ -434,12 +486,26 @@
           [ze [stone.per %r]]
       ==
     :_  this(game.sat %start, who.sat ze)
-    :_  ~
-    %-  effect
-    :~  %mor
-        instruct
-        (prompt (create-dial [ze icons "->"]))
-    ==
+    :~  ::  We unlock the waiting state and start the game
+        ::  Our opponent owns the turn
+        ::
+        :: =/  front-message
+        ::   %-  pairs:enjs:format
+        ::   :~  [%current (cite:title ze)]
+        ::       [%stone +.icons]
+        ::   ==
+        =/  front-message
+          :~  [%stone s+(crip +.icons)]
+              [%current s+(scot %p ze)]
+              [%status s+'start']
+          ==
+        (send-tile-diff front-message)
+        :: [front.sat %diff %json (pairs:enjs:format front-message)]
+        %-  effect
+        :~  %mor
+            instruct
+            (prompt (create-dial [ze icons "->"]))
+    ==  ==
   ::
       ::  %rematch: game has endend
       ::
@@ -458,6 +524,8 @@
             print-grid
             (prompt (create-dial [ze.i.subs.sat icons "<-"]))
   ==    ==
+::
+::  We receive the resolution of the game
 ::
 ++  diff-toe-winner
   |=  [wir=wire win=toe-winner]
@@ -478,6 +546,8 @@
       (prompt "{out.win}{keep-on}")
   ==
 ::
+::  We receive our opponent's move on the board
+::
 ++  diff-toe-turno
   |=  [wir=wire tur=toe-turno]
   ^-  (quip move _this.$)
@@ -489,17 +559,28 @@
   ::    but per.tur is our opponent, so we switch
   ::
   =/  icons   (get-icons (switch `per.tur))
+  =/  front-message=(list [@t json])
+    :~  [%status s+'play']
+        [%stone s+(crip (cuss (trip `@t`stone.per.tur)))]
+        [%move a+~[n+(scot %u -.spo.tur) n+(scot %u -.spo.tur)]]
+        :: [%move s+(crip "[{(scow %u -.spo.tur)},{(scow %u +.spo.tur)}]")]
+    ==
+  ~&  front-message
+  ::  We unlock the confirmation state and start the game
+  ::  We own the turn and can put moves on the board
+  ::
   ?~  subs.sat
     [~ this]
   ::  now is our turn
   ::
   :_  this(who.sat me)
-  :_  ~
-  %-  effect
-  :~  %mor
-      print-grid
-      (prompt (create-dial [ze.i.subs.sat icons "<-"]))
-  ==
+  :~  ^-  move  (send-tile-diff front-message)
+      :: [front.sat %diff %json (pairs:enjs:format front-message)]
+      %-  effect
+      :~  %mor
+          print-grid
+          (prompt (create-dial [ze.i.subs.sat icons "<-"]))
+  ==  ==
 ::
 ++  crash-current-game
   ^-  (quip move _this)
@@ -666,17 +747,17 @@
 ::
 ::    poking the app with any atom will do a manual wipe of the state
 ::
-++  poke-atom
-  |=  a=@
-  ^-  (quip move _this)
-  %-  wipe
-  ~[(effect mor+~[clear welcome new-line print-grid shall-we (prompt choose)])]
-::
-++  coup
-  |=  [wir=wire err=(unit tang)]
-  ?~  err  [~ +>]
-  :_  this
-  ~[(effect tan+u.err)]
+:: ++  poke-atom
+::   |=  a=@
+::   ^-  (quip move _this)
+::   %-  wipe
+::   ~[(effect mor+~[clear welcome new-line print-grid shall-we (prompt choose)])]
+:: ::
+:: ++  coup
+::   |=  [wir=wire err=(unit tang)]
+::   ?~  err  [~ +>]
+::   :_  this
+::   ~[(effect tan+u.err)]
 ::
 ::  %frontend
 ::
@@ -684,9 +765,17 @@
 ::
 +|  %frontend
 ::
+::  +peer-messages: subscribe to subset of messages and updates
+::
+::
+++  peer-primary
+  |=  wir=wire
+  ^-  (quip move _this)
+  [~ this]
+::
 ++  bound
   |=  [wir=wire success=? binding=binding:eyre]
-  ^-  (quip effect _this)
+  ^-  (quip move _this)
   [~ this]
 ::
 ::  $peer-toefile:
@@ -694,27 +783,65 @@
 ++  peer-toetile
   |=  wir=wire
   ^-  (quip move _this)
-  :_  this
+  ~&  %peer-toetile
+  :_  this(front.sat ost.bol)
   [ost.bol %diff %json *json]~
+::
+:: ++  front-error
+::   |=  mssg=tape
+::   ^-  json
+::   %-  pairs:enjs:format
+::     :~  [%message (tape:enjs:format mssg)]
+::         [%status s+'error']
+::     ==
+::
+:: ++  front-data
+::   |=  m=(list [p=@t q=json])
+::   ^-  json
+::   (pairs:enjs:format m]
 ::
 ::  $poke-json:
 ::
 ++  poke-json
   |=  jon=json
   ^-  (quip move _this)
-  :_  this
-  %+  turn  (prey:pubsub:userlib /toetile bol)
-  |=  [=bone ^]
-  =/  message=json  (pairs:enjs:format [%message (tape:enjs:format "Game begins!")]~)
-  [bone %diff %json message]
-::
+  ~&  json+jon
+  ?.  ?=(%o -.jon)
+    ::  ignores non-object json
+    [~ this]
+  =/  object=(map @t json)  +.jon
+  =/  data=json  (~(got by object) 'data')
+  =-  ~(action ge -)
+  ^-  (list @c)
+  ::  $data: cord->tape->(list @c)
+  ::
+  ::    this is a hack to reuse the parsing of console input
+  ::    to handle data validation. hacks need to be refactor
+  ::    at some point in the future, but not now
+  ::
+  ~&  data
+  ?+    -.data  !!
+    %a  =+  ((ar:dejs ni:dejs) data)
+        (tuba "{(scow %u (snag 0 -))}/{(scow %u (snag 1 -))}")
+        :: (tuba "1/1")
+    %s  (tuba (trip (so:dejs data)))
+  ==
 ::
 ::  +poke-handle-http-request: serve pages from file system based on URl path
 ::
+::
+++  send-tile-diff
+  |=  pairs=(list [@t json])
+  ^-  move
+  =-  (snag 0 -)
+  %+  turn  (prey:pubsub:userlib /toetile bol)
+  |=  [=bone ^]
+  [bone %diff %json (pairs:enjs:format pairs)]
+::
 ++  poke-handle-http-request
-  %-  (require-authorization:app ost.bol effect this)
+  %-  (require-authorization:app ost.bol move this)
   |=  =inbound-request:eyre
-  ^-  (quip effect _this)
+  ^-  (quip move _this)
   =/  request-line  (parse-request-line url.request.inbound-request)
   =/  back-path  (flop site.request-line)
   =/  name=@t
@@ -723,11 +850,12 @@
       ''
     i.back-path
   ::
+  :_  this  ^-  (list move)
   ?~  back-path
-    [[ost.bol %http-response not-found:app]~ this]
+    [ost.bol %http-response not-found:app]~
   ?:  =(name 'tile')
-    [[ost.bol %http-response (js-response:app tile-js)]~ this]
-  [[ost.bol %http-response not-found:app]~ this]
+    [ost.bol %http-response (js-response:app tile-js)]~
+  [ost.bol %http-response not-found:app]~
 ::
 ::  %console
 ::
@@ -768,20 +896,21 @@
           ?.  =(~ egg)  easter-egg
           ::  based on the current state, a different engine arm is called
           ::
-          ?-    game.sat
-              ::  Game Engine Step 1: selects opponent
-              ::
-              %select-opponent  ~(select-opponent ge buf.share)
-              ::  Game Engine Step 2: waits for confirmation
-              ::
-              %confirm          ~(wait-confirm ge buf.share)
-              ::  Game Engine Step 3: moves start
-              ::
-              %start            ~(moves-start ge buf.share)
-              ::  Game Engine Step 4: game ends, waits for end/continue?
-              ::
-              %replay           ~(continue-replay ge buf.share)
-          ==
+          ~(action ge buf.share)
+          :: ?-    game.sat
+          ::     ::  Game Engine Step 1: selects opponent
+          ::     ::
+          ::     %select-opponent  ~(select-opponent ge buf.share)
+          ::     ::  Game Engine Step 2: waits for confirmation
+          ::     ::
+          ::     %confirm          ~(wait-confirm ge buf.share)
+          ::     ::  Game Engine Step 3: moves start
+          ::     ::
+          ::     %start            ~(moves-start ge buf.share)
+          ::     ::  Game Engine Step 4: game ends, waits for end/continue?
+          ::     ::
+          ::     %replay           ~(continue-replay ge buf.share)
+          :: ==
     ::  $det: key press
     ::    FIXME: when code updates, it errors here:
     ::           lib/sole/hoon:<[103 5].[103 7]>
