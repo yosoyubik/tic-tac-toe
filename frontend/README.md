@@ -1,41 +1,60 @@
-Get started building a simple application for Landscape on your [Urbit](http://urbit.org) ship with a few commands.
+# TIC-TAC-TOE for Urbit
 
-This tool is experimental and primarily used internally to develop front-end applications. While Tlon does not officially support this tool, you can always get general programming help for Urbit in the `~dopzod/urbit-help` chat.
+[![Alternate Text](toe.png)](https://youtu.be/cKofR65sTHM "TIC-TAC-TOE for Urbit")
+
+
+## Features
+
+- Network multiplayer.
+- Board state printed in the console.
+- Notifications for incoming requests to play.
+- Uses a list to keep track of incoming and outgoing subscriptions.
+- Pending requests are queued and pulled after current game finishes.
+- Styled text to print crosses and noughts on board, and game. notifications.
+- Integration with Landscape.
 
 ## Installation
 
-This repository is available as a template; to immediately generate your application's repository you can click [here](https://github.com/urbit/create-landscape-app/generate). Clone the generated repository, `npm install` and then run `npm start` to get started (you can also directly clone this repository, if you wish!). 
-
 In order to run your application on your ship, you will need Urbit v.0.8.0 or higher. On your Urbit ship, if you haven't already, mount your pier to Unix with `|mount %`.
 
-## Using
+You have two options to mount the game into your pier:
 
-Once you're up and running, your tile lives in `tile/tile.js`, which uses [React](https://reactjs.org) to render itself -- you'll want a basic foothold with it first. When you make changes, the `urbit` directory will update with the compiled application and, if you're running `npm run serve`, it will automatically copy itself to your Urbit ship when you save your changes (more information on that below).
-
-### `npm start`
-
-This runs the wizard. Give it an application name and the location of your Urbit ship's desk and it will customise the files so your new application will run on your ship.
-
-### `npm run build`
+- ##### `npm run build`
 
 This builds your application and copies it into your Urbit ship's desk. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
 
-If this is the first time you're running your application on your Urbit ship, don't forget to `|start %yourapp`.
-
-### `npm run serve`
+- ##### `npm run serve`
 
 Builds the application and copies it into your Urbit ship's desk, watching for changes. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
 
-## FAQ
+When you make changes, the `urbit` directory will update with the compiled application and, if you're running `npm run serve`, it will automatically copy itself to your Urbit ship when you save your changes (more information on that below).
 
-### How can I ensure my app fits Landscape design?
+## Playing
 
-Landscape makes use of the [Tachyons](http://tachyons.io/) CSS framework. The template tile and full application both make use of it as an example for you to get going fast.
+In your urbit's Dojo, run the command:
 
-### What if I want to communicate with my ship / provide more functionality besides a front-end?
+    ~your-urbit:dojo> |start %toe
 
-By default, your app will provide an example of passing state from ship to front-end with the `peer-[yourappname]tile` arm in the app's .hoon file -- in this case, just sending your ship's name as a data prop. The code is well-commented if you don't want to pass state, or if you want to know how to pass almost anything else from your ship to the Landscape interface.
+The list of commands are:
 
-In order to do anything substantial, of course, you'll want to know [Hoon](https://urbit.org/docs/learn/hoon/). If this is intimidating, don't panic: `create-landscape-app` is a fantastic way to start learning by leveraging your strengths. This repository is intended to be a boilerplate for rapid front-end development; it's also a gradual, incremental introduction to Hoon for web developers by allowing for rapid prototyping and experimentation with the Landscape interface.
+- `'~ship-name'`: sends request to ~ship
+  - Only if the prompt is `| shall we play a game?`
+- `'!'`: cancels the current game. (if any, unqueues next subscription)
+- `'l'`: list current subscriptions (any time during the game)
+  - ![list|20%](subs.png)
+- `'1/1'`: board coordinates (`[1-3/1-3]`)
+  - Only if the prompt is `| ~zod:[X] <- ~dev:[O] |`
+- `'Y/y or N/n'`: confirm/reject request to play `[Y/N]`
+  - Only if the prompt is:
+    - `| ~zod wins! continue? (Y/N) |`
+    - `| waiting for ~zod (!=quit) |`
 
-Happy hacking!
+A web frontend is also available on your Urbit's Lanscape.
+
+## In Progress
+- Code refactoring (frontend+backend)
+- Follow [code style](https://urbit.org/docs/learn/arvo/style/)
+- Remove old three/four letter variable names
+- Use Hoon idioms
+- Replace two-way subscription queue
+- Heavy frontend refactor (follow React's best practices)

@@ -1,5 +1,0 @@
-module.exports = {
-  URBIT_PIERS: [
-    "/Users/jose/Dropbox/urbit/dev.zod/base",
-  ]
-};

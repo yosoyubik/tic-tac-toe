@@ -1,29 +1,37 @@
 # TIC-TAC-TOE for Urbit
 
-This is an homage to [urbit's](https://urbit.org/) tic-tac-toe [app](https://www.youtube.com/watch?v=_acTt4_IXYM&t=225s), based on the [example](https://github.com/joshuareagan/doc-drafts/blob/master/Hoon-Ch2-10.md) written by [Joshua Reagan](http://www.joshuareagan.com/) (aka ~taglux-nidsep)
+[![Alternate Text](toe.png)](https://youtu.be/cKofR65sTHM "TIC-TAC-TOE for Urbit")
 
-![Alt Text](toe.low.gif)
 
 ## Features
 
-- Network multiplayer
-- Board state printed in the console
-- Structures in `/=home=/sur` and marks for updates
-- Notifications for game invitation
-- Uses a list to keep track of incoming and outgoing subscriptions
-  - TODO: Research Gall/Hall to replace this
-- Pending requests are queued and pulled after current game finishes
-- Styled text to print crosses and noughts on board, and game notifications
+- Network multiplayer.
+- Board state printed in the console.
+- Notifications for incoming requests to play.
+- Uses a list to keep track of incoming and outgoing subscriptions.
+- Pending requests are queued and pulled after current game finishes.
+- Styled text to print crosses and noughts on board, and game. notifications.
+- Integration with Landscape.
 
-## Local install
+## Installation
 
-This might take some time to compile, seat tight!
+In order to run your application on your ship, you will need Urbit v.0.8.0 or higher. On your Urbit ship, if you haven't already, mount your pier to Unix with `|mount %`.
 
-    cp toe/app/toe.hoon /path/to/your-urbit/home/app
-    cp -r toe/mar/toe /path/to/your-urbit/home/mar
-    cp toe/sur/toe.hoon /path/to/your-urbit/home/sur
+You have two options to mount the game into your pier:
 
-## Start playing!!
+- ##### `npm run build`
+
+This builds your application and copies it into your Urbit ship's desk. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
+
+- ##### `npm run serve`
+
+Builds the application and copies it into your Urbit ship's desk, watching for changes. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
+
+When you make changes, the `urbit` directory will update with the compiled application and, if you're running `npm run serve`, it will automatically copy itself to your Urbit ship when you save your changes (more information on that below).
+
+## Playing
+
+![Alternate Text](tie.gif)
 
 In your urbit's Dojo, run the command:
 
@@ -43,26 +51,12 @@ The list of commands are:
     - `| ~zod wins! continue? (Y/N) |`
     - `| waiting for ~zod (!=quit) |`
 
+A web frontend is also available on your Urbit's Lanscape.
+
 ## In Progress
-- Refactor code
-- Follow `/=home=/gen/deco.hoon` best-coding practices (deprecated)
+- Code refactoring (frontend+backend)
 - Follow [code style](https://urbit.org/docs/learn/arvo/style/)
 - Remove old three/four letter variable names
-- Using Hoonian idioms
-
-## TODO
-- Partial board re-paint on each move.
-- Web frontend
-- Integrate with Hall to allow for rooms in chat
-- Single-player mode
-- Refactor marks, wires & paths
-- Send multple requests to multiple ships
-- Don't block game waiting for a confirmation
-- Cancel a specific request from the list of subscribers
-- Documentation
-
-## References
-
-- https://github.com/joshuareagan/doc-drafts/blob/master/Hoon-Ch2-10.md
-- https://urbit.org/
-- https://www.youtube.com/watch?v=_acTt4_IXYM
+- Use Hoon idioms
+- Replace two-way subscription queue
+- Heavy frontend refactor (follow React's best practices)
