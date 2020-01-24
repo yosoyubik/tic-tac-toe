@@ -39,7 +39,7 @@
           ::  $next: flag to indicate a replay
           ::
           next=?
-          ::  $game: console's global state
+          ::  $game: game loop global state
           ::
           game=game-state
           ::  $cli: console state
@@ -185,7 +185,7 @@
       active  ~
   ==
 ::
-++  game
+++  game-loop
   =<  |_  buffer=(list @c)
       ::  +action: processes user input based on current state
       ::
@@ -225,7 +225,9 @@
   ::
   ++  play
     |=  command=tape
-    =/  pos=(unit [@ @])  (rust command position)
+    =/  pos=(unit [@ @])
+      =-  (rust command ;~((glue fas) - -))
+      (cook |=(a=@t (rash a dem)) (shim '1' '3'))
     =^  edit  state.cli  (to-sole:co:view reset)
     =,  co:view
     ?~  pos  [[(send det+edit)]~ state]
@@ -340,11 +342,12 @@
     ::  Other toers are waiting for confirmation to play
     ::
     :_  state(rooms t.rooms, game %confirm, next %.n, active ~)
-    ^-  (list card)
     :~  (confirm:updates:fe:view guest:next)
         (confirm:updates:co:view guest:next)
     ==
-  ::  +join:  subscribes back to our guest
+  ::  +join:  subscribes back to our guest so the logic to send board moves
+  ::  (i.e. %give a %gift) is the same for both players
+  ::
   ++  join
     |=  ze=@p
     ^-  (quip card _state)
@@ -367,9 +370,6 @@
       [[ze `[*board-game toers who=ze]] t.rooms]
     ==
     :_  state(game %play)
-    ::  we subscribe back so the logic to send board moves (%give a %gift)
-    ::  is the same for both players
-    ::
     =,  view
     :~  (playing:updates:co ze)
         (playing:updates:fe ze)
@@ -381,8 +381,6 @@
     ^-  (quip card _state)
     ~&  "{<ze>} is ready. start!"
     =.  active  `ze
-    ::  We unlock the waiting state and start the game.
-    ::
     :_  state
     =,  view
     ~[(playing:updates:co ze) (playing:updates:fe ze)]
@@ -410,8 +408,6 @@
       ?>  ?=([[@ ^] *] rooms)
       ^-  game-room
       u.room.i.rooms
-      :: =*  r  +.i.rooms
-      :: ?~(r !! +.r)
     ::
     ++  toers
       ?>  ?=(^ rooms)
@@ -429,6 +425,7 @@
       who:(need room.i.rooms)
     --
   ::  +next: next room waiting for confirmation
+  ::
   ++  next
     |%
     ++  room
@@ -449,11 +446,10 @@
     =*  room  u.room.i.rooms
     =/  bc  ~(. board-core [room:current pos])
     =^  out  board.room  play:bc
-    =.  who.room  switch
     =?  game  .?(out)  %replay
-    =,  updates:view
+    =.  who.room  switch
     :_  state
-    ~&  out
+    =,  updates:view
     ?~  out
       (playing turno:bc)
     (wins [out turno:bc switch])
@@ -461,6 +457,13 @@
   ++  switch
     ^-  @p
     ?:(=(who:current me) ship:current me)
+  ::
+  ++  stones
+    ^-  [me=tape ze=tape]
+    =/  p=player
+      (~(got by toers:current) me)
+    :-  (trip stone.p)
+    ?:(=(stone.p %'O') "X" "O")
   ::
   ++  crash
     ^-  (quip card _state)
@@ -497,7 +500,7 @@
   =<  |_  [room=game-room pos=[@ @]]
       ++  play
         ^-  [outcome board-game]
-        =.  board.room  (~(put by board.room) [spo:turno per:turno])
+        =.  board.room  (~(put by board.room) [(spot pos) player])
         [out board.room]
       ::
       ++  has     (~(has by board.room) (spot pos))
@@ -625,7 +628,7 @@
               grid
               %-  prompt
               %-  dial
-              [ze stones ?:(=(who me) "<-" "->")]
+              [ze stones:room-core ?:(=(who me) "<-" "->")]
       ==  ==
     ::
     ++  wins
@@ -650,9 +653,7 @@
   ::
   ++  fe
     |%
-    ::  +handle-http-request:
-    ::
-    ::    serve pages from file system based on URl path
+    ::  +handle-http-request: serve pages from file system based on URl path
     ::
     ++  handle-http-request
       |=  =inbound-request:eyre
@@ -675,7 +676,7 @@
         [~ state]
       =/  object=(map @t json)  +.jon
       =/  data=json  (~(got by object) 'data')
-      =-  ~(action game -)
+      =-  ~(action game-loop -)
       ^-  (list @c)
       ?+    -.data  !!
         %a  =-  (tuba "{-<}/{->}")
@@ -684,10 +685,7 @@
             ((ar:dejs ni:dejs) data)
         %s  (tuba (trip (so:dejs data)))
       ==
-    ::
-    ::  +send:
-    ::
-    ::    sends new data to the frontend
+    ::  +send: new data to the frontend
     ::
     ++  send
       |=  pairs=(list [@t json])
@@ -698,13 +696,11 @@
       |%
       ++  playing
         |=  guest=@p
-        ::  Update to the fronted as json
-        ::
         :: =/  who=@p
         ::   ?~  active  me
         ::   ?:(=(%.y ^next) me guest)
         %-  send  ^-  (list [@t json])
-        :~  [%stone s+(crip me:stones)]
+        :~  [%stone s+(crip me:stones:room-core)]
             [%next s+(scot %p who:current:room-core)]
             [%status s+'start']
         ==
@@ -728,6 +724,7 @@
       ::
       ++  wins
         |=  [out=outcome move=toe-turno winner=@p]
+        ^-  card
         %-  send  ^-  (list [@t json])
         :~  [%status s+'replay']
             [%winner ?:(=((need out) %tie) s+'tie' s+(scot %p winner))]
@@ -755,11 +752,10 @@
       [%det edit]
     ::
     ++  dial
-      ::  +cite:title compresses the ship's name if
-      ::    we are dealing with a comet
-      ::
       |=  [guest=ship stones=[me=tape ze=tape] arrow=tape]
       ^-  styx
+      ::  +cite:title compresses the ship's name if we are dealing with a comet
+      ::
       :~  [[~ ~ ~] " | "]
           [[~ ~ ~] "{(cite:title me)}"]
           [[~ ~ ~] ":["]
@@ -822,7 +818,7 @@
         ::  based on the current state, a different engine arm is called
         ::
         ~&  action+buf.state.cli
-        ~(action game buf.state.cli)
+        ~(action game-loop buf.state.cli)
       ::
           ::  $det: key press
           ::  pressed key is stored in the console state
@@ -882,8 +878,8 @@
         %-  send  ^-  sole-effect
         :~  %mor
             instruct
-            %-  prompt
-            (dial [guest stones ?:(=(who:current:room-core me) "<-" "->")])
+            %-  prompt  =,  room-core
+            (dial [guest stones ?:(=(who:current me) "<-" "->")])
         ==
       ::
       ++  waiting
@@ -900,6 +896,7 @@
       ::
       ++  wins
         |=  [out=outcome winner=@p]
+        ^-  card
         %-  send  ^-  sole-effect
         :~  %mor
             grid
@@ -913,27 +910,12 @@
       |=  inv=sole-edit
       ^-  [sole-change sole-share]
       (~(transmit sole-lib state.cli) inv)
+    ::
+    ++  easter-egg
+      ^-  (quip card _state)
+      =^  edit  state.cli  (to-sole reset)
+      :_  state
+      ~[(send mor+~[joshua det+edit])]
     --
   --
-::
-++  position
-  ::  e.g. [1-3]/[1-3]
-  ::
-  =-  ;~((glue fas) - -)
-  (cook |=(a/@ (sub a '0')) (shim '1' '3'))
-::
-++  stones
-  ^-  [me=tape ze=tape]
-  =/  p=player
-    (~(got by toers:current:room-core) me)
-  :-  (trip stone.p)
-  %-  trip
-  ?:(=(stone.p %'O') %'X' %'O')
-::
-++  easter-egg
-  ^-  (quip card _state)
-  =^  edit  state.cli  (to-sole:co:view reset)
-  :_  state
-  =,  co:view
-  ~[(send mor+~[joshua det+edit])]
 --

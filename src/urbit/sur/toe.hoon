@@ -33,5 +33,4 @@
 +$  toe-player   [msg=action per=player]
 +$  toe-winner   [out=tape tur=toe-turno]
 +$  toe-turno    [per=player spo=spot]
-+$  toe-cancel   %bye
 --
