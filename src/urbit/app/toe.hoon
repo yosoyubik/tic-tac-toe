@@ -234,12 +234,12 @@
     ?.   =(me who:current:room-core)
       :_  state
       [(send mor+~[det+edit wait-your-turn])]~
-    =/  bc  ~(. board-core [room:current:room-core u.pos])
+    =/  bc  ~(. board-core [room:current:room-core (spot u.pos)])
     ?:  has:bc
       :_  state
       [(send mor+~[det+edit spot-taken])]~
     =/  who=@p  who:current:room-core
-    =/  [cards=(list card) state=_state]  (update:room-core u.pos)
+    =/  [cards=(list card) state=_state]  (update:room-core (spot u.pos))
     :_  state
     %+  weld
       cards
@@ -440,7 +440,7 @@
     --
   ::
   ++  update
-    |=  pos=[@ @]
+    |=  pos=spot
     ^-  (quip card _state)
     ?>  ?=([[@p ^] *] rooms)
     =*  room  u.room.i.rooms
@@ -497,16 +497,16 @@
   --
 ::
 ++  board-core
-  =<  |_  [room=game-room pos=[@ @]]
+  =<  |_  [room=game-room pos=spot]
       ++  play
         ^-  [outcome board-game]
-        =.  board.room  (~(put by board.room) [(spot pos) player])
+        =.  board.room  (~(put by board.room) [pos player])
         [out board.room]
       ::
-      ++  has     (~(has by board.room) (spot pos))
+      ++  has     (~(has by board.room) pos)
       ++  player  (~(got by toers.room) who.room)
-      ++  turno   ^-(toe-turno [player (spot pos)])
-      ++  out     (outcome-check per:turno board.room)
+      ++  turno   ^-(toe-turno [player pos])
+      ++  out     (outcome-check player board.room)
       --
   |%
   ++  outcome-check
