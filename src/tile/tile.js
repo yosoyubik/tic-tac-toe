@@ -223,6 +223,7 @@ export default class toeTile extends Component {
   }
 
   handleClick(spot) {
+    console.log(spot, this.state.amNext);
     const squares = this.state.squares.slice();
     if (this.state.amNext &&  squares[spot[0]][spot[1]] === null) {
       squares[spot[0]][spot[1]] = this.state.stone.toLocaleUpperCase();
@@ -275,6 +276,7 @@ export default class toeTile extends Component {
       let message = !!data.data ? data.data : "";
       if (data !== prevProps.data) {
         // We receive a diff from %toe
+        console.log(data);
         if ('status' in data) {
           if (data.status === "error"){
             this.setState({
@@ -285,7 +287,9 @@ export default class toeTile extends Component {
             if ('next' in data) {
               amNext = (data.next.replace('~', '') === ship);
             }
-            if ((data.status === "select-opponent") || (data.status === "confirm")) {
+            if ((data.status === "select-opponent") ||
+                (data.status === "confirm") ||
+                (data.status === "wait")) {
               opponent = data.message;
               game = data.status;
               squares = Array(3).fill(null).map(x => Array(3).fill(null));
@@ -313,7 +317,7 @@ export default class toeTile extends Component {
                 if (winner === ship) {
                   result = <p className="small f7 lh-copy green">You win!</p>;
                 } else if (winner === "tie") {
-                  result = <p 
+                  result = <p
                     style={{fontSize: 8}}
                     className="small f7 lh-copy blue">
                     <a target="_blank"

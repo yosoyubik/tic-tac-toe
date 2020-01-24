@@ -23087,7 +23087,7 @@
             var dist_2 = dist.sigil;
             var dist_3 = dist.stringRenderer;
 
-            const _jsxFileName = "/Users/jose/Dropbox/urbit/toe/frontend/src/tile/tile.js";
+            const _jsxFileName = "/Users/jose/Dropbox/urbit/toe/src/tile/tile.js";
             const Sigil = props => {
              return (
                react.createElement('div', {__self: undefined, __source: {fileName: _jsxFileName, lineNumber: 8}}
@@ -23308,6 +23308,7 @@
               }
 
               handleClick(spot) {
+                console.log(spot, this.state.amNext);
                 const squares = this.state.squares.slice();
                 if (this.state.amNext &&  squares[spot[0]][spot[1]] === null) {
                   squares[spot[0]][spot[1]] = this.state.stone.toLocaleUpperCase();
@@ -23325,7 +23326,7 @@
                     width: 234,
                     height: 234,
                     background: '#1a1a1a'
-                  }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 239}}
+                  }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 240}}
                     , child
                   )
                 );
@@ -23360,6 +23361,7 @@
                   let message = !!data.data ? data.data : "";
                   if (data !== prevProps.data) {
                     // We receive a diff from %toe
+                    console.log(data);
                     if ('status' in data) {
                       if (data.status === "error"){
                         this.setState({
@@ -23370,7 +23372,9 @@
                         if ('next' in data) {
                           amNext = (data.next.replace('~', '') === ship);
                         }
-                        if ((data.status === "select-opponent") || (data.status === "confirm")) {
+                        if ((data.status === "select-opponent") ||
+                            (data.status === "confirm") ||
+                            (data.status === "wait")) {
                           opponent = data.message;
                           game = data.status;
                           squares = Array(3).fill(null).map(x => Array(3).fill(null));
@@ -23396,20 +23400,20 @@
                           if ('winner' in data) {
                             winner = data.winner.replace('~', '');
                             if (winner === ship) {
-                              result = react.createElement('p', { className: "small f7 lh-copy green"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 314}}, "You win!" );
+                              result = react.createElement('p', { className: "small f7 lh-copy green"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 318}}, "You win!" );
                             } else if (winner === "tie") {
-                              result = react.createElement('p', { 
+                              result = react.createElement('p', {
                                 style: {fontSize: 8},
-                                className: "small f7 lh-copy blue"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 316}}
+                                className: "small f7 lh-copy blue"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 320}}
                                 , react.createElement('a', { target: "_blank",
                                 href: (data.stone === stone) ?
                                 "https://youtu.be/X8Q9a55zVy4" :
-                                "https://youtu.be/itl125pavOM", __self: this, __source: {fileName: _jsxFileName, lineNumber: 319}}, "Stalemate"
+                                "https://youtu.be/itl125pavOM", __self: this, __source: {fileName: _jsxFileName, lineNumber: 323}}, "Stalemate"
                                 )
                               );
                              }
                             else{
-                              result = react.createElement('p', { className: "small f7 lh-copy red"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 327}}, "You lose" );
+                              result = react.createElement('p', { className: "small f7 lh-copy red"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 331}}, "You lose" );
                             }
                           }
                         }
@@ -23451,17 +23455,17 @@
                 const amNext = this.state.amNext;
 
                 return this.renderWrapper((
-                  react.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 370}}
+                  react.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 374}}
                     , react.createElement('p', { className: "gray label-regular b absolute"   ,
-                      style: {left: 8, top: 4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 371}}, "Tic-Tac-Toe"
+                      style: {left: 8, top: 4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}}, "Tic-Tac-Toe"
 
                     )
-                      , error ? react.createElement(Message, { mssg: message, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}} ) : null 
-                      , react.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 30, top: 73}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 376}}
-                        , react.createElement(Sigil, { patp: ship, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 377}} )
+                      , error ? react.createElement(Message, { mssg: message, __self: this, __source: {fileName: _jsxFileName, lineNumber: 379}} ) : null 
+                      , react.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 30, top: 73}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 380}}
+                        , react.createElement(Sigil, { patp: ship, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 381}} )
                          ,  ((game !== 'start') && (game !== 'play')) ?
                             react.createElement('p', { className: "tc label-regular b gray"   ,
-                            style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 379}}, "vs"
+                            style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 383}}, "vs"
 
                             ) : null
                           
@@ -23470,38 +23474,38 @@
                               className: 
                                 classnames("tc", "label-regular", "b",
                                 {"red": !amNext, "green": amNext}),
-                              style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 385}}
+                              style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 389}}
                                 ,  amNext ? '↑' : '↓' 
                             ) : null
                          
                          ,  (game !== null) ?
-                           react.createElement(Sigil, { patp: opponent, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 394}} ) :
+                           react.createElement(Sigil, { patp: opponent, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 398}} ) :
                            react.createElement('p', { className: "tc label-regular b blue"   ,
-                              style: {width: 30, fontSize: 20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 395}}, "?"
+                              style: {width: 30, fontSize: 20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 399}}, "?"
 
                            )
                          
                       )
-                      , react.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 90, top: 55}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 401}}
+                      , react.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 90, top: 55}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}
                         , react.createElement(Board, {
                           squares: this.state.squares,
-                          onClick: spot => this.handleClick(spot), __self: this, __source: {fileName: _jsxFileName, lineNumber: 402}}
+                          onClick: spot => this.handleClick(spot), __self: this, __source: {fileName: _jsxFileName, lineNumber: 406}}
                         )
                       )
                       ,  (game === null) ?
-                        react.createElement(ChooseOpponent, { send: this.sendOpponent.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 408}} ) : null 
+                        react.createElement(ChooseOpponent, { send: this.sendOpponent.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}} ) : null 
                       ,  (game === 'select-opponent') ?
-                        react.createElement(Message, { mssg: "...waiting for ".concat(opponent), __self: this, __source: {fileName: _jsxFileName, lineNumber: 410}} ) : null 
+                        react.createElement(Message, { mssg: "...waiting for ".concat(opponent), __self: this, __source: {fileName: _jsxFileName, lineNumber: 414}} ) : null 
                       ,  (game === 'confirm') ?
                         react.createElement(Confirmation, { mssg: opponent, status: status,
                           confirm: this.confirmGame.bind(this),
-                          reject: this.rejectGame.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}} ) : null 
+                          reject: this.rejectGame.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 416}} ) : null 
                       ,  (game === 'start') ?
-                        react.createElement(Message, { mssg: "The game begins!", __self: this, __source: {fileName: _jsxFileName, lineNumber: 416}} ) : null 
+                        react.createElement(Message, { mssg: "The game begins!", __self: this, __source: {fileName: _jsxFileName, lineNumber: 420}} ) : null 
                       ,  (game === 'replay') ?
                         react.createElement(Replay, { result: result,
                         replay: this.replay.bind(this),
-                        restart: this.restart.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 418}} ) : null 
+                        restart: this.restart.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 422}} ) : null 
                     )
                 ));
               }
