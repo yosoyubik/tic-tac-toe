@@ -1,6 +1,13 @@
 ::  /lib/toe/hoon
 ::
 |%
++|  %players
+::  default, player's icons are harcoded
+::  me/ joiner/  first-to-replay = [X green]
+::  ze/inviter/second-to-confirm = [O   red]
+::
+++  player-a  |=([me=@p ze=@p] ~[me^[%'X' %g] ze^[%'O' %r]])
+++  player-b  |=([me=@p ze=@p] ~[me^[%'O' %g] ze^[%'X' %r]])
 +|  %intro-text
 ++  welcome
   :-  %klr
@@ -33,6 +40,9 @@
       :-  [```%y]
       txt="playing with yourself is frowned upon... "
   ==
+++  left
+  |=  guest=tape
+  klr+~[[[```%b] " [{guest} cancelled your game...]"]]
 ::
 +|  %text-helpers
 ::

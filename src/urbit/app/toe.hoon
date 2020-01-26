@@ -30,19 +30,19 @@
       ==
     ::
     +$  state-zero
-      $:  ::  $rooms: Active/Pending games
+      $:  ::  %rooms: Active/Pending games
           ::
           rooms=game-rooms
-          ::  $current: room that receives console board moves
+          ::  %active: room that receives console board moves
           ::
           active=(unit ship)
-          ::  $next: flag to indicate a replay
+          ::  %next: flag to indicate a confirmed replay
           ::
           next=?
-          ::  $game: game loop global state
+          ::  %game: game loop global state
           ::
           game=game-state
-          ::  $cli: console state
+          ::  %cli: console state
           ::
           ::  TODO: allow for multiple console states
           ::
@@ -50,23 +50,13 @@
       ==
     ::
     +$  card  card:agent:gall
-    ::  FIXME: $spot has to be redefined
-    ::     even though it's already in sur...
+    ::  FIXME: $spot has to be redefined even though it's already in sur...
     ::
     +$  spot  [coord coord]
     --
 ::
 =|  state-zero
 =*  state  -
-::  Helpers
-::
-=>  |%  ::  default, player's icons are harcoded
-        ::  me/ joiner/  first-to-replay = [X green]
-        ::  ze/inviter/second-to-confirm = [O   red]
-        ::
-        ++  player-a  |=([me=@p ze=@p] ~[me^[%'X' %g] ze^[%'O' %r]])
-        ++  player-b  |=([me=@p ze=@p] ~[me^[%'O' %g] ze^[%'X' %r]])
-    --
 ::  Main
 ::
 %+  verb  |
@@ -82,7 +72,8 @@
       =.  state  wipe:tc
       :_  this
       :~  [%pass /bind/toe %arvo %e %connect [~ /'~toe'] %toe]
-          :*  %pass  /launch/toe  %agent  [our.bol %launch]  %poke
+          ~&  poking-launch+our.bowl
+          :*  %pass  /launch/toe  %agent  [our.bowl %launch]  %poke
               %launch-action  !>([%toe /toetile '/~toe/js/tile.js'])
       ==  ==
     ::
@@ -94,10 +85,10 @@
     ++  on-poke
       |=  [=mark =vase]
       ^-  (quip card _this)
-      ~&  poked+mark
       =^  cards  state
         ?+    mark  (on-poke:def mark vase)
             %handle-http-request
+           ~&  poked+[mark vase src.bowl]
           =+  !<([eyre-id=@ta =inbound-request:eyre] vase)
           :_  state
           %+  give-simple-payload:app  eyre-id
@@ -105,15 +96,23 @@
           handle-http-request:fe:view:tc
         ::
             %json
+           ~&  poked+[mark vase src.bowl]
           (poke-json:fe:view:tc !<(json vase))
         ::
             %sole-action
           (poke-sole-action:co:view:tc !<(sole-action vase))
         ::
             %toe-player
+           ~&  poked+[mark vase src.bowl]
           (receive:room-core:tc src.bowl)
         ::
+            %toe-cancel
+           ~&  poked+[mark vase src.bowl]
+          ?~  rooms  `state
+          (cancel:room-core:tc src.bowl)
+        ::
             %urbit
+           ~&  poked+[mark vase src.bowl]
           ::  TODO: Don't block when receiving a request to play
           ::
           (receive:room-core:tc !<(@p vase))
@@ -123,31 +122,27 @@
     ++  on-watch
       |=  pax=path
       ^-  (quip card _this)
-      ~&  [watch+pax src.bol]
+      ~&  [watch+pax src.bowl]
       =^  cards  state  (connect:tc pax)
       [cards this]
     ::
-    ++  on-leave  on-leave:def
-      :: |=  =wire
-      :: ^-  (quip card _this)
-      :: ~&  leave+path
-      :: =^  cards  state
-      ::   ?+   wire   `this
-      ::     [%join ^]  crash:room-core:tc
-      ::   ==
-      :: [cards this]
+    ++  on-leave
+    |=  =path
+    ~&  leaving+[path src.bowl]
+    `this
     ::
     ++  on-peek   on-peek:def
     ++  on-agent
       |=  [=wire =sign:agent:gall]
       ^-  (quip card _this)
+      ~&  connected+[wire src.bowl sign]
       ?-    -.sign
           %poke-ack   (on-agent:def wire sign)
           %watch-ack  ~&  "conf {<wire>}"  (on-agent:def wire sign)
         ::
           %kick
         =^  cards  state
-          crash:room-core:tc
+          (close:room-core:tc %.y)
         [cards this]
       ::
           %fact
@@ -166,6 +161,7 @@
     ++  on-arvo
       |=  [=wire =sign-arvo]
       ^-  (quip card:agent:gall _this)
+      ~&  arvoed+[wire src.bowl]
       ?:  ?=(%bound +<.sign-arvo)
         [~ this]
       (on-arvo:def wire sign-arvo)
@@ -175,6 +171,7 @@
 ::
 |_  bol=bowl:gall
 +*  me  our.bol
+::  +wipe: resets the state of the game
 ::
 ++  wipe
   ^-  _state
@@ -184,83 +181,80 @@
       game    %begin
       active  ~
   ==
+::  +game-loop: processes user input based on current state
 ::
 ++  game-loop
-  =<  |_  buffer=(list @c)
-      ::  +action: processes user input based on current state
-      ::
+  =<  |_  command=tape
       ++  action
         ^-  (quip card _state)
-        ~&  state+game
-        ?-    game
-          ::  Game Engine Step 1: sends invitation to play
-          ::
-          %begin    (begin (tufa buffer))
-          ::  Game Engine Step 2: blocks dojo for confirmation
-          ::
-          %wait     [~ state]
-          ::  Game Engine Step 2.1: blocks dojo for confirmation
-          ::
-          %confirm  (confirm (tufa buffer))
-          ::  Game Engine Step 3: game starts
-          ::
-          %play     (play (tufa buffer))
-          ::  Game Engine Step 4: game ends, waits for end/continue?
-          ::
-          %replay   (confirm (tufa buffer))
-        ==
+        =^  edit  state.cli  (to-sole:co:view reset)
+        =^  cards  state
+          ?-    game
+            ::  Game Engine Step 1: sends invitation to play
+            ::
+            %begin    (begin command)
+            ::  Game Engine Step 2: blocks dojo for confirmation
+            ::
+            %wait     [~ state]
+            ::  Game Engine Step 2.1: blocks dojo for confirmation
+            ::
+            %confirm  (confirm command)
+            ::  Game Engine Step 3: game starts
+            ::
+            %play     (play command)
+            ::  Game Engine Step 4: game ends, waits for end/continue?
+            ::
+            %replay   (confirm command)
+          ==
+        :_  state
+        [(send:co:view det+edit) cards]
       --
   |%
   ++  begin
       |=  command=tape
+      ^-  (quip card _state)
       =/  req=(unit @p)  (rust command ;~(pfix sig fed:ag))
       ?~  req
         [~ state]
       ?:  =(u.req me)
         [not-allowed:updates:view state]
-      =^  edit  state.cli  (to-sole:co:view reset)
       =,  room-core
-      :_  (create [u.req %wait])
-      [(send:co:view det+edit) (invite u.req)]
+      [(invite u.req) (create [u.req %wait])]
   ::
   ++  play
     |=  command=tape
+    ^-  (quip card _state)
     =/  pos=(unit [@ @])
       =-  (rust command ;~((glue fas) - -))
       (cook |=(a=@t (rash a dem)) (shim '1' '3'))
-    =^  edit  state.cli  (to-sole:co:view reset)
-    =,  co:view
-    ?~  pos  [[(send det+edit)]~ state]
+    ?~  pos  [~ state]
     ?.   =(me who:current:room-core)
       :_  state
-      [(send mor+~[det+edit wait-your-turn])]~
+      [(send:co:view wait-your-turn)]~
     =/  bc  ~(. board-core [room:current:room-core (spot u.pos)])
     ?:  has:bc
       :_  state
-      [(send mor+~[det+edit spot-taken])]~
+      [(send:co:view spot-taken)]~
     =/  who=@p  who:current:room-core
-    =/  [cards=(list card) state=_state]  (update:room-core (spot u.pos))
+    =^  cards  state  (update:room-core (spot u.pos))
     :_  state
     %+  weld
       cards
-    :~  (send det+edit)
-        =-  [%give %fact `/room/(scot %p ship:current:room-core) -]
-        ?:  =(~ out:bc)
-          [%toe-turno !>(turno:bc)]
+    ^-  (list card)
+    :~  =-  [%give %fact `/room/(scot %p ship:current:room-core) -]
+        ?:  =(~ out:bc)  [%toe-turno !>(turno:bc)]
         [%toe-winner !>([(end:co:view [out:bc who]) turno:bc])]
     ==
   ::
   ++  confirm
     |=  command=tape
+    ^-  (quip card _state)
     =/  answer=(unit @t)  (rust (cass command) (mask "yn"))
-    =^  edit  state.cli  (to-sole:co:view reset)
-    ?~  answer  [[(send:co:view det+edit)]~ state]
-    =^  cards  state
-      =,  room-core
-      ?:(=(u.answer 'n') close confirm)
-    :_  state
-    [(send:co:view det+edit) cards]
+    ?~  answer  [~ state]
+    =,  room-core
+    ?:(=(u.answer 'n') (close %.n) confirm)
   --
+::  +room-core: handles actions to a game room
 ::
 ++  room-core
   |%
@@ -282,22 +276,21 @@
         (waiting:updates:co guest)
         (waiting:updates:fe guest)
     ==
-  ::  %receive: a guest ship sends an invite to play
+  ::  %receive: a guest ship sends an invite to play/replay
   ::
   ++  receive
     |=  guest=@p
     ^-  (quip card _state)
-    ~&  receive+guest
+    ~&  active+active
     =/  enqueue
       =,  updates:view
-      :-  (confirm guest)
+      :-  (receive guest)
       (create [guest ?~(active %confirm game)])
-    ~&  [active guest]
     ?~  active  enqueue
     ?.  =(guest u.active)  enqueue
     :_  state(next %.y)
-    (replay:updates:view guest)
-  ::  %accept:  innitializes room state and starts game
+    (notify:updates:view guest)
+  ::  %confirm:  innitializes room state and starts game
   ::
   ++  confirm
     ::  TODO: not only handle oldest room invite (i.rooms)
@@ -313,7 +306,8 @@
       ?:(=(%.y ^next) me ze)
     =/  request=(list card)
       ?.  =(game %replay)
-        [%pass /join %agent [ze %toe] %watch /room/(scot %p me)]~
+        ~&  in-confirm+[ze /play]
+        [%pass /play %agent [ze %toe] %watch /room/(scot %p me)]~
       ::  Next is activated if our opponent already confirmed the replay
       ::
       ?:  =(%.y next)  ~
@@ -327,24 +321,70 @@
     :~  (playing:updates:co ze)
         (playing:updates:fe ze)
     ==
-  ::  %close:  reject invite to play
+  ::  +close: leaves the current rooms and closes subscriptions
   ::
   ++  close
-    ::  TODO: don't process just the oldest request
-    ::  allow for selective cancelling.
-    ::
+    |=  kicked=?
+    ~&  kicked
+    ~&  wex+wex.bol
+    ~&  sup+sup.bol
     ^-  (quip card _state)
-    ?>  ?=([^ *] rooms)
+    ?~  rooms
+       =.  rooms  ~
+       [restart:updates:view wipe]
+    =/  disconnect=(list card)
+      =*  ze  ship:current
+      ?~  room.i.rooms
+        ?:  =(kicked %.y)  ~
+        [%pass /cancel %agent [ze %toe] %poke %toe-cancel !>(%bye)]~
+      %+  weld
+        ::  we leave our subscription
+        ::
+        ~&  in-close+[ze /leave/play]
+        ?.  (~(has by wex.bol) [/play ze %toe])
+          ~&  "none"  ~
+        ^-  (list card)  [%pass /play %agent [ze %toe] %leave ~]~
+      ::  ...and kick our subscriber
+      ::
+      ^-  (list card)  [%give %kick `/room/(scot %p ze) ~]~
     =.  room.i.rooms   ~
+   ~&  disconnect+disconnect
     ?~  t.rooms
-      :-  [restart:updates:view]
-      state(rooms t.rooms, game %begin, next %.n, active ~)
-    ::  Other toers are waiting for confirmation to play
+      :_  wipe
+      (weld disconnect restart:updates:view)
+    :-  (weld disconnect confirm:updates:view)
+    state(rooms t.rooms, game %confirm, next %.n, active ~)
+  ::  +crash: forced close a room from console's "!" command
+  ::
+  ++  crash
+    =^  edit  state.cli  (to-sole:co:view reset)
+    =^  cards  state  (close %.n)
+    :_  state
+    [(send:co:view det+edit) cards]
+  ::  +cancel: cancels a /request %poke to play
+  ::
+  ++  cancel
+    |=  guest=@p
+    ~&  "cancelled"
+    ~&  [guest ship:current]
+    ?:  =(guest ship:current)
+      (close %.n)
+    ::  we get a cancel from someone waiting in the queue
+    ::  the current game needs to keep going, the queue is updated
+    ::  silently, and we inform the app of the event
     ::
-    :_  state(rooms t.rooms, game %confirm, next %.n, active ~)
-    :~  (confirm:updates:fe:view guest:next)
-        (confirm:updates:co:view guest:next)
+    :-  ~[(send:co:view (left (cite:title guest)))]
+    %_    state
+        rooms
+      %+  skip  rooms
+      |=([ze=@p *] =(ze guest))
     ==
+  ::  +restart: goes back to %begin state
+  ::
+  ++  restart
+    ^-  (quip card _state)
+    =.  rooms  ~
+    [restart:updates:view wipe]
   ::  +join:  subscribes back to our guest so the logic to send board moves
   ::  (i.e. %give a %gift) is the same for both players
   ::
@@ -356,24 +396,21 @@
     ::  toers.rooms needs to be modifed before we send the new state
     ::    since create dial can't access a future state
     ::
-    =/  =toers
-      (~(gas by *toers) (player-b me ze))
+    =/  =toers  (~(gas by *toers) (player-b me ze))
     ::  Getting pokes while being in %wait/confirm state appends
     ::  new rooms at the end, so we can deal with the head
     ::  (oldest request) easily.
     ::  TODO: A future version will search for the proper room in the list.
     ::
     =:  active  `ze
-        rooms
-      ::  Our opponent (%ze) owns the turn
-      ::
-      [[ze `[*board-game toers who=ze]] t.rooms]
+        rooms   [[ze `[*board-game toers who=ze]] t.rooms]
     ==
     :_  state(game %play)
     =,  view
     :~  (playing:updates:co ze)
         (playing:updates:fe ze)
-        [%pass /join %agent [ze %toe] %watch /room/(scot %p me)]
+        ~&  in-join+[ze /play]
+        [%pass /play %agent [ze %toe] %watch /room/(scot %p me)]
     ==
   ::  +start: the requester subscribes back and the game starts
   ++  start
@@ -438,6 +475,7 @@
       ?>  ?=([^ ^] rooms)
       ship.i.t.rooms
     --
+  ::  +update: puts a new move on the current room's board
   ::
   ++  update
     |=  pos=spot
@@ -453,10 +491,12 @@
     ?~  out
       (playing turno:bc)
     (wins [out turno:bc switch])
+  ::  +switch:  sets next player allowed to perform game moves
   ::
   ++  switch
     ^-  @p
     ?:(=(who:current me) ship:current me)
+  ::  +stones: gets player's icons
   ::
   ++  stones
     ^-  [me=tape ze=tape]
@@ -464,37 +504,8 @@
       (~(got by toers:current) me)
     :-  (trip stone.p)
     ?:(=(stone.p %'O') "X" "O")
-  ::
-  ++  crash
-    ^-  (quip card _state)
-    ~&  "crashed"
-    =^  edit  state.cli  (to-sole:co:view reset)
-    ::  TODO:  if rooms, close instead
-    ::
-    :_  wipe
-    %+  weld
-      ?~  active  ~
-      :~
-          ::  we leave our subscriptions
-          ::
-          [%pass /join %agent [u.active %toe] %leave ~]
-          ::  ...and kick our subscriber
-          ::
-          :: [%give %kick `/join ~]
-      ==
-    =,  view
-    :~  (send:co mor+[det+edit all-effects:co])
-        (send:fe [%status s+'null']~)
-    ==
-    ::  TODO
-    :: :-  (send det+edit)]~
-    :: ?~  active
-    ::  empty room
-    ::
-    :: cancel
-    ::  populated room
-    ::  TODO
   --
+::  +board-core: puts a new move on the board
 ::
 ++  board-core
   =<  |_  [room=game-room pos=spot]
@@ -544,13 +555,15 @@
         ~[[%1 %1] [%2 %2] [%3 %3]]
     ==
   --
+::  +connect: handles subscriptions and updates
 ::
 ++  connect
   |=  pax=path
   ^-  (quip card _state)
+  ~&  who-connect+pax
   |^  ?+    pax  ~|([%peer-toe-strange pax] !!)
           [%sole *]           sole
-          [%toetile *]        tile
+          [%toetile ~]        tile
           [%room ^]           (room i.t.pax)
           [%http-response *]  [~ state]
       ==
@@ -558,16 +571,19 @@
   ::
   ++  tile
     ^-  (quip card _state)
+    ~&  tiled+src.bol
     :_  state
     [%give %fact ~ %json !>(*json)]~
   ::  +sole: innitializes the console's state
   ::
   ++  sole
     ^-  (quip card _state)
+    ~&  sole+[me src.bol]
+    ?.  (team:title me src.bol)  ~|([%strange-sole src.bol] !!)
     :_  state(state.cli *sole-share)
     =,  co:view
     [(send mor+~[clear welcome wopr grid shall-we (prompt choose)])]~
-  ::  +room: receives a subscription to play in a room
+  ::  +room: receives a subscription to connecto to a room
   ::
   ++  room
     |=  id=@t
@@ -583,28 +599,34 @@
     (start ze)
   --
 ::  +view
-::  TODO: please make me into a %view-app!
+::  TODO: please make me into a %view app!
 ::
 ++  view
   |%
+  ::  TODO: move other view updates here
+  ::
   ++  updates
     |%
-    ::  TODO: move other view updates here
-    ::
     ++  restart
       ^-  (list card)
       :~  (send:co mor+all-effects:co)
           (send:fe [%status s+'null']~)
       ==
     ::
-    ++  confirm
+    ++  receive
       |=  guest=@p
       =/  room-name=tape  (cite:title guest)
       ?^  rooms
-        (replay guest)
+        (notify guest)
       :~  (send:fe ~[[%message s+(crip room-name)] [%status s+'confirm']])
           =,  co
           (send (prompt "{confirm}{room-name}? (Y/N) | "))
+      ==
+    ::
+    ++  confirm
+      =/  next=@p  guest:next:room-core
+      :~  (confirm:updates:fe next)
+          (confirm:updates:co next)
       ==
     ::
     ++  playing
@@ -636,10 +658,10 @@
       ^-  (list card)
       ~[(wins:updates:fe out move winner) (wins:updates:co [out winner])]
     ::
-    ++  replay
+    ++  notify
       |=  guest=@p
       :_  ~
-      (send:co klr+~[[[```%b] " [ {<guest>} wants to play again ]"]])
+      (send:co klr+~[[[```%b] " [ {<guest>} wants to play ]"]])
     ::
     ++  not-allowed
       :~  (send:co frowned-upon)
@@ -676,7 +698,7 @@
         [~ state]
       =/  object=(map @t json)  +.jon
       =/  data=json  (~(got by object) 'data')
-      =-  ~(action game-loop -)
+      =-  ~(action game-loop (tufa -))
       ^-  (list @c)
       ?+    -.data  !!
         %a  =-  (tuba "{-<}/{->}")
@@ -800,25 +822,20 @@
         ?~  buf.state.cli  [~ state]
         ::  checks for a restart game command
         ::
-        ~&  buf+(tufa buf.state.cli)
-        =/  crash=(unit @t)
-          (rust (tufa buf.state.cli) ;~(just zap))
-        ?.  =(~ crash)  crash:room-core
+        =/  crash=(unit @t)  (rust (tufa buf.state.cli) ;~(just zap))
+        ?^  crash  crash:room-core
         ::  checks for a "list waiting opponents" command
         ::
-        =/  list=(unit @t)
-          (rust (tufa buf.state.cli) ;~(just (just 'l')))
-        ?.  =(~ list)  list-subscribers
+        =/  list=(unit @t)  (rust (tufa buf.state.cli) ;~(just (just 'l')))
+        ?^  list  list-subscribers
         ::  %egg (?)
         ::
         =/  egg=(unit @t)
           (rust (tufa buf.state.cli) ;~(just (jest (crip "joshua"))))
-        ?.  =(~ egg)
-          easter-egg
+        ?^  egg  easter-egg
         ::  based on the current state, a different engine arm is called
         ::
-        ~&  action+buf.state.cli
-        ~(action game-loop buf.state.cli)
+        ~(action game-loop (tufa buf.state.cli))
       ::
           ::  $det: key press
           ::  pressed key is stored in the console state
