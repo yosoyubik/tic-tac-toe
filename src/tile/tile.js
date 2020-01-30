@@ -82,10 +82,10 @@ class Message extends React.Component {
   )}
 }
 
-class Replay extends React.Component {
-  replay(e) {
+class Rematch extends React.Component {
+  rematch(e) {
     e.preventDefault();
-    this.props.replay();
+    this.props.rematch();
   }
 
   restart(e) {
@@ -104,7 +104,7 @@ class Replay extends React.Component {
         </div>
         <div className="fl w-60 pa2">
           <button className="fr f6 no-underline br-pill ba ph3 b--white pv2 mb2 fade dim black"
-          onClick={this.replay.bind(this)}>
+          onClick={this.rematch.bind(this)}>
           Y
           </button>
           <button className="fr f6 no-underline br-pill ba ph3 b--white pv2 mb2 fade dim black"
@@ -208,7 +208,7 @@ export default class toeTile extends Component {
     api.action('toe', 'json', {'data': 'n'});
   }
 
-  replay() {
+  rematch() {
     this.setState({
       squares: Array(3).fill(null).map(x => Array(3).fill(null)),
     });
@@ -223,7 +223,6 @@ export default class toeTile extends Component {
   }
 
   handleClick(spot) {
-    console.log(spot, this.state.amNext);
     const squares = this.state.squares.slice();
     if (this.state.amNext &&  squares[spot[0]][spot[1]] === null) {
       squares[spot[0]][spot[1]] = this.state.stone.toLocaleUpperCase();
@@ -276,7 +275,6 @@ export default class toeTile extends Component {
       let message = !!data.data ? data.data : "";
       if (data !== prevProps.data) {
         // We receive a diff from %toe
-        console.log(data);
         if ('status' in data) {
           if (data.status === "error"){
             this.setState({
@@ -305,8 +303,9 @@ export default class toeTile extends Component {
                 squares[data.move[0] - 1][data.move[1] - 1] = data.stone;
               }
             }
-            if (data.status === "replay") {
-              game = "replay";
+            if (data.status === "rematch") {
+              console.log("rematching");
+              game = "rematch";
               // Game has ended, so we make both players unable to click on the board
               amNext = false;
               if ('move' in data) {
@@ -314,17 +313,19 @@ export default class toeTile extends Component {
               }
               if ('winner' in data) {
                 winner = data.winner.replace('~', '');
+                console.log(winner);
                 if (winner === ship) {
                   result = <p className="small f7 lh-copy green">You win!</p>;
                 } else if (winner === "tie") {
+                  const link1 = "https://youtu.be/X8Q9a55zVy4";
+                  const link2 = "https://youtu.be/itl125pavOM";
                   result = <p
                     style={{fontSize: 8}}
                     className="small f7 lh-copy blue">
                     <a target="_blank"
-                    href={(data.stone === stone) ?
-                    "https://youtu.be/X8Q9a55zVy4" :
-                    "https://youtu.be/itl125pavOM"}>
-                    Stalemate</a>
+                      href={(data.stone === stone) ? link1: link2}>
+                      Stalemate
+                    </a>
                   </p>;
                  }
                 else{
@@ -418,9 +419,9 @@ export default class toeTile extends Component {
               reject={this.rejectGame.bind(this)} /> : null }
           { (game === 'start') ?
             <Message mssg={"The game begins!"} /> : null }
-          { (game === 'replay') ?
-            <Replay result={result}
-            replay={this.replay.bind(this)}
+          { (game === 'rematch') ?
+            <Rematch result={result}
+            rematch={this.rematch.bind(this)}
             restart={this.restart.bind(this)} /> : null }
         </div>
     ));

@@ -1,5 +1,4 @@
-::
-::::  /sur/toe/hoon
+::/sur/toe/hoon
 ::
 |%
 ::
@@ -7,31 +6,28 @@
 ::
 +$  game-room    [board=board-game =toers who=@p]
 +$  game-rooms   (list [=ship room=(unit game-room)])
-+$  grid         (list [%klr styx])
 +$  outcome      (unit ?(%wins %tie))
 +$  stone        ?(%'X' %'O')
-+$  player       [=stone color=tint]
 ::  $players: each player has a stone (%x/%o) and color (%g/%r)
 ::
++$  player       [=stone color=tint]
 +$  toers        (map ship player)
 +$  coord        ?(%1 %2 %3)
-+$  spot         [coord coord]
++$  position     [coord coord]
 ::  $board-state: internal board for our game [@ @] -> icon
 ::
-+$  board-game   (map spot player)
++$  board-game   (map position player)
 ::  $game-state: current game state
 ::
-+$  game-state   ?(%begin %wait %confirm %play %replay)
++$  game-state   ?(%begin %wait %confirm %play %rematch)
 ::
-+$  action       ?(%accept %replay)
-::
-:: +$  toe-request  ship
++$  action       ?(%accept %rematch)
 ::
 +|  %marks
 ::  Marks sent in each move, as defined in %/mar/toe/
 ::
 +$  toe-player   [msg=action per=player]
 +$  toe-winner   [out=tape tur=toe-turno]
-+$  toe-turno    [per=player spo=spot]
++$  toe-turno    [per=player spo=position]
 +$  toe-cancel   %bye
 --

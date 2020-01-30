@@ -1,16 +1,15 @@
 {
-  "name": "create-landscape-app",
-  "version": "0.2.2",
-  "description": "Get started with a Landscape application.",
-  "main": "node install.js",
+  "name": "tic-tac-toe",
+  "version": "0.0.2",
+  "description": "TIC-TAC-TOE for Urbit",
+  "main": "npm run build",
   "scripts": {
-    "start": "node install.js",
     "build": "gulp",
     "serve": "gulp watch"
   },
-  "author": "Tlon Corp",
+  "author": "Jose L. Bellod Cisneros",
   "license": "MIT",
-  "repository": "https://github.com/urbit/create-landscape-app",
+  "repository": "https://github.com/yosoyubik/tic-tac-toe",
   "devDependencies": {
     "@sucrase/gulp-plugin": "^2.0.0",
     "css-loader": "3.2.0",

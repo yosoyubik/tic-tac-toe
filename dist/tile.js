@@ -82,10 +82,10 @@ class Message extends React.Component {
   )}
 }
 
-class Replay extends React.Component {
-  replay(e) {
+class Rematch extends React.Component {
+  rematch(e) {
     e.preventDefault();
-    this.props.replay();
+    this.props.rematch();
   }
 
   restart(e) {
@@ -104,7 +104,7 @@ class Replay extends React.Component {
         )
         , React.createElement('div', { className: "fl w-60 pa2"  , __self: this, __source: {fileName: _jsxFileName, lineNumber: 105}}
           , React.createElement('button', { className: "fr f6 no-underline br-pill ba ph3 b--white pv2 mb2 fade dim black"           ,
-          onClick: this.replay.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 106}}, "Y"
+          onClick: this.rematch.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 106}}, "Y"
 
           )
           , React.createElement('button', { className: "fr f6 no-underline br-pill ba ph3 b--white pv2 mb2 fade dim black"           ,
@@ -208,7 +208,7 @@ export default class toeTile extends Component {
     api.action('toe', 'json', {'data': 'n'});
   }
 
-  replay() {
+  rematch() {
     this.setState({
       squares: Array(3).fill(null).map(x => Array(3).fill(null)),
     });
@@ -223,7 +223,6 @@ export default class toeTile extends Component {
   }
 
   handleClick(spot) {
-    console.log(spot, this.state.amNext);
     const squares = this.state.squares.slice();
     if (this.state.amNext &&  squares[spot[0]][spot[1]] === null) {
       squares[spot[0]][spot[1]] = this.state.stone.toLocaleUpperCase();
@@ -241,7 +240,7 @@ export default class toeTile extends Component {
         width: 234,
         height: 234,
         background: '#1a1a1a'
-      }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 240}}
+      }, __self: this, __source: {fileName: _jsxFileName, lineNumber: 239}}
         , child
       )
     );
@@ -276,7 +275,6 @@ export default class toeTile extends Component {
       let message = !!data.data ? data.data : "";
       if (data !== prevProps.data) {
         // We receive a diff from %toe
-        console.log(data);
         if ('status' in data) {
           if (data.status === "error"){
             this.setState({
@@ -305,8 +303,9 @@ export default class toeTile extends Component {
                 squares[data.move[0] - 1][data.move[1] - 1] = data.stone;
               }
             }
-            if (data.status === "replay") {
-              game = "replay";
+            if (data.status === "rematch") {
+              console.log("rematching");
+              game = "rematch";
               // Game has ended, so we make both players unable to click on the board
               amNext = false;
               if ('move' in data) {
@@ -314,21 +313,23 @@ export default class toeTile extends Component {
               }
               if ('winner' in data) {
                 winner = data.winner.replace('~', '');
+                console.log(winner);
                 if (winner === ship) {
                   result = React.createElement('p', { className: "small f7 lh-copy green"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 318}}, "You win!" );
                 } else if (winner === "tie") {
+                  const link1 = "https://youtu.be/X8Q9a55zVy4";
+                  const link2 = "https://youtu.be/itl125pavOM";
                   result = React.createElement('p', {
                     style: {fontSize: 8},
-                    className: "small f7 lh-copy blue"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 320}}
+                    className: "small f7 lh-copy blue"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 322}}
                     , React.createElement('a', { target: "_blank",
-                    href: (data.stone === stone) ?
-                    "https://youtu.be/X8Q9a55zVy4" :
-                    "https://youtu.be/itl125pavOM", __self: this, __source: {fileName: _jsxFileName, lineNumber: 323}}, "Stalemate"
+                      href: (data.stone === stone) ? link1: link2, __self: this, __source: {fileName: _jsxFileName, lineNumber: 325}}, "Stalemate"
+
                     )
                   );
                  }
                 else{
-                  result = React.createElement('p', { className: "small f7 lh-copy red"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 331}}, "You lose" );
+                  result = React.createElement('p', { className: "small f7 lh-copy red"   , __self: this, __source: {fileName: _jsxFileName, lineNumber: 332}}, "You lose" );
                 }
               }
             }
@@ -371,17 +372,17 @@ export default class toeTile extends Component {
     const amNext = this.state.amNext;
 
     return this.renderWrapper((
-      React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 374}}
+      React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 375}}
         , React.createElement('p', { className: "gray label-regular b absolute"   ,
-          style: {left: 8, top: 4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 375}}, "Tic-Tac-Toe"
+          style: {left: 8, top: 4}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 376}}, "Tic-Tac-Toe"
 
         )
-          , error ? React.createElement(Message, { mssg: message, __self: this, __source: {fileName: _jsxFileName, lineNumber: 379}} ) : null 
-          , React.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 30, top: 73}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 380}}
-            , React.createElement(Sigil, { patp: ship, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 381}} )
+          , error ? React.createElement(Message, { mssg: message, __self: this, __source: {fileName: _jsxFileName, lineNumber: 380}} ) : null 
+          , React.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 30, top: 73}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 381}}
+            , React.createElement(Sigil, { patp: ship, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 382}} )
              ,  ((game !== 'start') && (game !== 'play')) ?
                 React.createElement('p', { className: "tc label-regular b gray"   ,
-                style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 383}}, "vs"
+                style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 384}}, "vs"
 
                 ) : null
               
@@ -390,38 +391,38 @@ export default class toeTile extends Component {
                   className: 
                     classnames("tc", "label-regular", "b",
                     {"red": !amNext, "green": amNext}),
-                  style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 389}}
+                  style: {left: 27, width: 30}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 390}}
                     ,  amNext ? '↑' : '↓' 
                 ) : null
              
              ,  (game !== null) ?
-               React.createElement(Sigil, { patp: opponent, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 398}} ) :
+               React.createElement(Sigil, { patp: opponent, colorF: "white", colorB: "black", __self: this, __source: {fileName: _jsxFileName, lineNumber: 399}} ) :
                React.createElement('p', { className: "tc label-regular b blue"   ,
-                  style: {width: 30, fontSize: 20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 399}}, "?"
+                  style: {width: 30, fontSize: 20}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 400}}, "?"
 
                )
              
           )
-          , React.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 90, top: 55}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 405}}
+          , React.createElement('div', { className: "w-100 h-100 absolute"  , style: {left: 90, top: 55}, __self: this, __source: {fileName: _jsxFileName, lineNumber: 406}}
             , React.createElement(Board, {
               squares: this.state.squares,
-              onClick: spot => this.handleClick(spot), __self: this, __source: {fileName: _jsxFileName, lineNumber: 406}}
+              onClick: spot => this.handleClick(spot), __self: this, __source: {fileName: _jsxFileName, lineNumber: 407}}
             )
           )
           ,  (game === null) ?
-            React.createElement(ChooseOpponent, { send: this.sendOpponent.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 412}} ) : null 
+            React.createElement(ChooseOpponent, { send: this.sendOpponent.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 413}} ) : null 
           ,  (game === 'select-opponent') ?
-            React.createElement(Message, { mssg: "...waiting for ".concat(opponent), __self: this, __source: {fileName: _jsxFileName, lineNumber: 414}} ) : null 
+            React.createElement(Message, { mssg: "...waiting for ".concat(opponent), __self: this, __source: {fileName: _jsxFileName, lineNumber: 415}} ) : null 
           ,  (game === 'confirm') ?
             React.createElement(Confirmation, { mssg: opponent, status: status,
               confirm: this.confirmGame.bind(this),
-              reject: this.rejectGame.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 416}} ) : null 
+              reject: this.rejectGame.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 417}} ) : null 
           ,  (game === 'start') ?
-            React.createElement(Message, { mssg: "The game begins!", __self: this, __source: {fileName: _jsxFileName, lineNumber: 420}} ) : null 
-          ,  (game === 'replay') ?
-            React.createElement(Replay, { result: result,
-            replay: this.replay.bind(this),
-            restart: this.restart.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 422}} ) : null 
+            React.createElement(Message, { mssg: "The game begins!", __self: this, __source: {fileName: _jsxFileName, lineNumber: 421}} ) : null 
+          ,  (game === 'rematch') ?
+            React.createElement(Rematch, { result: result,
+            rematch: this.rematch.bind(this),
+            restart: this.restart.bind(this), __self: this, __source: {fileName: _jsxFileName, lineNumber: 423}} ) : null 
         )
     ));
   }

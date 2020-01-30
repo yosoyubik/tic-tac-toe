@@ -40,7 +40,7 @@
       :-  [```%y]
       txt="playing with yourself is frowned upon... "
   ==
-++  left
+++  cancel-game
   |=  guest=tape
   klr+~[[[```%b] " [{guest} cancelled your game...]"]]
 ::

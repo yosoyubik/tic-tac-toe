@@ -6,7 +6,7 @@
 ::  i.e in tic tac toe, you could say, players subscribe on a game session id,
 ::  and then you just do per-game updates
 ::
-/-  *toe, *sole
+/-  *sole,  *toe
 /+  default-agent, sole-lib=sole, *server, *toe, verb
 ::
 :: This imports the tile's JS file from the file system as a variable.
@@ -18,8 +18,6 @@
   /|  /js/
       /~  ~
   ==
-::
-=,  format
 ::
 =>  |%
     ::
@@ -50,9 +48,6 @@
       ==
     ::
     +$  card  card:agent:gall
-    ::  FIXME: $spot has to be redefined even though it's already in sur...
-    ::
-    +$  spot  [coord coord]
     --
 ::
 =|  state-zero
@@ -88,7 +83,6 @@
       =^  cards  state
         ?+    mark  (on-poke:def mark vase)
             %handle-http-request
-           ~&  poked+[mark vase src.bowl]
           =+  !<([eyre-id=@ta =inbound-request:eyre] vase)
           :_  state
           %+  give-simple-payload:app  eyre-id
@@ -120,16 +114,22 @@
       [cards this]
     ::
     ++  on-watch
-      |=  pax=path
+      |=  =path
       ^-  (quip card _this)
-      ~&  [watch+pax src.bowl]
-      =^  cards  state  (connect:tc pax)
+      ~&  [watch+path src.bowl]
+      =^  cards  state
+        ?+    path  ~|([%peer-toe-strange path] !!)
+          [%sole *]           sole:connect:tc
+          [%toetile ~]        tile:connect:tc
+          [%room ^]           (room:connect:tc i.t.path)
+          [%http-response *]  [~ state]
+        ==
       [cards this]
     ::
     ++  on-leave
-    |=  =path
-    ~&  leaving+[path src.bowl]
-    `this
+      |=  =path
+      ~&  leaving+[path src.bowl]
+      `this
     ::
     ++  on-peek   on-peek:def
     ++  on-agent
@@ -169,22 +169,21 @@
     ++  on-fail   on-fail:def
     --
 ::
-|_  bol=bowl:gall
-+*  me  our.bol
+|_  =bowl:gall
 ::  +wipe: resets the state of the game
 ::
 ++  wipe
   ^-  _state
   %_  state
-      rooms   ~
-      next    %.n
-      game    %begin
-      active  ~
+    rooms   ~
+    next    %.n
+    game    %begin
+    active  ~
   ==
 ::  +game-loop: processes user input based on current state
 ::
 ++  game-loop
-  =<  |_  command=tape
+  |^  |_  command=tape
       ++  action
         ^-  (quip card _state)
         =^  edit  state.cli  (to-sole:co:view reset)
@@ -193,66 +192,67 @@
             ::  Game Engine Step 1: sends invitation to play
             ::
             %begin    (begin command)
-            ::  Game Engine Step 2: blocks dojo for confirmation
+            ::  Game Engine Step 2: blocks console for network confirmation
+            ::  on the sender
             ::
             %wait     [~ state]
-            ::  Game Engine Step 2.1: blocks dojo for confirmation
+            ::  Game Engine Step 3: blocks console for manual confirmation
+            ::  on the receiver
             ::
             %confirm  (confirm command)
-            ::  Game Engine Step 3: game starts
+            ::  Game Engine Step 4: game starts
             ::
             %play     (play command)
-            ::  Game Engine Step 4: game ends, waits for end/continue?
+            ::  Game Engine Step 5: game ends, waits for end/continue?
             ::
-            %replay   (confirm command)
+            %rematch   (confirm command)
           ==
         :_  state
         [(send:co:view det+edit) cards]
       --
-  |%
+  ::
   ++  begin
       |=  command=tape
       ^-  (quip card _state)
       =/  req=(unit @p)  (rust command ;~(pfix sig fed:ag))
       ?~  req
         [~ state]
-      ?:  =(u.req me)
+      ?:  =(u.req src.bowl)
         [not-allowed:updates:view state]
-      =,  room-core
-      [(invite u.req) (create [u.req %wait])]
+      [(invite:room-core u.req) (create:room-core [u.req %wait])]
   ::
   ++  play
     |=  command=tape
     ^-  (quip card _state)
     =/  pos=(unit [@ @])
       =-  (rust command ;~((glue fas) - -))
-      (cook |=(a=@t (rash a dem)) (shim '1' '3'))
+      (cook |=(a=@ (sub a '0')) (shim '1' '3'))
     ?~  pos  [~ state]
-    ?.   =(me who:current:room-core)
+    ?.  =(our.bowl who:current:room-core)
       :_  state
       [(send:co:view wait-your-turn)]~
-    =/  bc  ~(. board-core [room:current:room-core (spot u.pos)])
+    =/  bc  ~(. board-core [room:current:room-core (position u.pos)])
     ?:  has:bc
       :_  state
       [(send:co:view spot-taken)]~
     =/  who=@p  who:current:room-core
-    =^  cards  state  (update:room-core (spot u.pos))
+    =^  cards  state  (update:room-core (position u.pos))
     :_  state
     %+  weld
       cards
     ^-  (list card)
-    :~  =-  [%give %fact `/room/(scot %p ship:current:room-core) -]
-        ?:  =(~ out:bc)  [%toe-turno !>(turno:bc)]
-        [%toe-winner !>([(end:co:view [out:bc who]) turno:bc])]
-    ==
+    :_  ~
+    :^  %give  %fact  `/room/(scot %p ship:current:room-core)
+    ?:  =(~ out:bc)
+      [%toe-turno !>(turno:bc)]
+    [%toe-winner !>([(end:co:view [out:bc who]) turno:bc])]
   ::
   ++  confirm
     |=  command=tape
     ^-  (quip card _state)
     =/  answer=(unit @t)  (rust (cass command) (mask "yn"))
     ?~  answer  [~ state]
-    =,  room-core
-    ?:(=(u.answer 'n') (close %.n) confirm)
+    ?:(=(u.answer 'n') (close:room-core %.n) confirm:room-core)
   --
 ::  +room-core: handles actions to a game room
 ::
@@ -270,11 +270,9 @@
   ++  invite
     |=  guest=@p
     ^-  (list card)
-    =,  view
-    ^-  (list card)
-    :~  [%pass /request %agent [guest %toe] %poke %urbit !>(me)]
-        (waiting:updates:co guest)
-        (waiting:updates:fe guest)
+    :~  (waiting:updates:co:view guest)
+        (waiting:updates:fe:view guest)
+        [%pass /request %agent [guest %toe] %poke %urbit !>(our.bowl)]
     ==
   ::  %receive: a guest ship sends an invite to play/replay
   ::
@@ -283,8 +281,7 @@
     ^-  (quip card _state)
     ~&  active+active
     =/  enqueue
-      =,  updates:view
-      :-  (receive guest)
+      :-  (receive:updates:view guest)
       (create [guest ?~(active %confirm game)])
     ?~  active  enqueue
     ?.  =(guest u.active)  enqueue
@@ -297,37 +294,35 @@
     ::
     ^-  (quip card _state)
     ?>  ?=(^ rooms)
-    =/  ze=@p  ship.i.rooms
+    =*  ze  ship.i.rooms
     =/  =toers
       %-  ~(gas by *toers)
-      ?.(=(%.y ^next) (player-a me ze) (player-b me ze))
+      ?.(=(%.y ^next) (player-a our.bowl ze) (player-b our.bowl ze))
     =/  who=@p
-      ?~  active  me
-      ?:(=(%.y ^next) me ze)
+      ?~  active  our.bowl
+      ?:(=(%.y ^next) our.bowl ze)
     =/  request=(list card)
-      ?.  =(game %replay)
+      ?.  =(game %rematch)
         ~&  in-confirm+[ze /play]
-        [%pass /play %agent [ze %toe] %watch /room/(scot %p me)]~
-      ::  Next is activated if our opponent already confirmed the replay
+        [%pass /play %agent [ze %toe] %watch /room/(scot %p our.bowl)]~
+      ::  %next is set if our opponent already confirmed the replay
       ::
       ?:  =(%.y next)  ~
-      =/  =toe-player  [%replay [%'X' %g]]
+      =/  =toe-player  [%rematch [%'X' %g]]
       [%pass /replay %agent [ze %toe] %poke %toe-player !>(toe-player)]~
     =.  rooms  [[ze `[*board-game toers who=who]] t.rooms]
     :_  state(active `ze, game %play)
-    =,  view
-    %+  weld
-      request
-    :~  (playing:updates:co ze)
-        (playing:updates:fe ze)
+    %+  weld  request
+    :~  (playing:updates:co:view ze)
+        (playing:updates:fe:view ze)
     ==
   ::  +close: leaves the current rooms and closes subscriptions
   ::
   ++  close
     |=  kicked=?
     ~&  kicked
-    ~&  wex+wex.bol
-    ~&  sup+sup.bol
+    ~&  wex+wex.bowl
+    ~&  sup+sup.bowl
     ^-  (quip card _state)
     ?~  rooms
        =.  rooms  ~
@@ -337,18 +332,16 @@
       ?~  room.i.rooms
         ?:  =(kicked %.y)  ~
         [%pass /cancel %agent [ze %toe] %poke %toe-cancel !>(%bye)]~
-      %+  weld
-        ::  we leave our subscription
-        ::
-        ~&  in-close+[ze /leave/play]
-        ?.  (~(has by wex.bol) [/play ze %toe])
-          ~&  "none"  ~
-        ^-  (list card)  [%pass /play %agent [ze %toe] %leave ~]~
-      ::  ...and kick our subscriber
-      ::
-      ^-  (list card)  [%give %kick `/room/(scot %p ze) ~]~
+      ?:  =(kicked %.y)  ~
+      ~&  in-close+[ze /leave/play]
+      :~  ::  we leave our subscription
+          ::
+          [%pass /play %agent [ze %toe] %leave ~]
+          ::  ...and kick our subscriber
+          ::
+          [%give %kick `/room/(scot %p ze) ~]
+      ==
     =.  room.i.rooms   ~
-   ~&  disconnect+disconnect
     ?~  t.rooms
       :_  wipe
       (weld disconnect restart:updates:view)
@@ -368,17 +361,15 @@
     ~&  "cancelled"
     ~&  [guest ship:current]
     ?:  =(guest ship:current)
-      (close %.n)
+      (close %.y)
     ::  we get a cancel from someone waiting in the queue
     ::  the current game needs to keep going, the queue is updated
     ::  silently, and we inform the app of the event
     ::
-    :-  ~[(send:co:view (left (cite:title guest)))]
-    %_    state
-        rooms
-      %+  skip  rooms
-      |=([ze=@p *] =(ze guest))
-    ==
+    :_   state(rooms (skip rooms |=([ze=@p *] =(ze guest))))
+    :_  ~
+    %-  send:co:view
+    (cancel-game (cite:title guest))
   ::  +restart: goes back to %begin state
   ::
   ++  restart
@@ -396,7 +387,7 @@
     ::  toers.rooms needs to be modifed before we send the new state
     ::    since create dial can't access a future state
     ::
-    =/  =toers  (~(gas by *toers) (player-b me ze))
+    =/  =toers  (~(gas by *toers) (player-b our.bowl ze))
     ::  Getting pokes while being in %wait/confirm state appends
     ::  new rooms at the end, so we can deal with the head
     ::  (oldest request) easily.
@@ -406,11 +397,10 @@
         rooms   [[ze `[*board-game toers who=ze]] t.rooms]
     ==
     :_  state(game %play)
-    =,  view
-    :~  (playing:updates:co ze)
-        (playing:updates:fe ze)
+    :~  (playing:updates:co:view ze)
+        (playing:updates:fe:view ze)
         ~&  in-join+[ze /play]
-        [%pass /play %agent [ze %toe] %watch /room/(scot %p me)]
+        [%pass /play %agent [ze %toe] %watch /room/(scot %p our.bowl)]
     ==
   ::  +start: the requester subscribes back and the game starts
   ++  start
@@ -419,19 +409,10 @@
     ~&  "{<ze>} is ready. start!"
     =.  active  `ze
     :_  state
-    =,  view
-    ~[(playing:updates:co ze) (playing:updates:fe ze)]
+    ~[(playing:updates:co:view ze) (playing:updates:fe:view ze)]
   ::  +current: room that the user interacts with
   ::
   ++  current
-    :: =<  |=  =term
-    ::     :: *(map spot player)
-    ::     ?+  term  !!
-    ::       %b  board
-    ::       %r  room
-    ::       %s  ship
-    ::       %w  who
-    ::     ==
     |%
     ++  board
       ?>  ?=(^ rooms)
@@ -458,7 +439,6 @@
     ::
     ++  who
       ?>  ?=(^ rooms)
-      =*  r  room.i.rooms
       who:(need room.i.rooms)
     --
   ::  +next: next room waiting for confirmation
@@ -478,37 +458,36 @@
   ::  +update: puts a new move on the current room's board
   ::
   ++  update
-    |=  pos=spot
+    |=  pos=position
     ^-  (quip card _state)
     ?>  ?=([[@p ^] *] rooms)
     =*  room  u.room.i.rooms
     =/  bc  ~(. board-core [room:current pos])
     =^  out  board.room  play:bc
-    =?  game  .?(out)  %replay
+    =?  game  .?(out)  %rematch
     =.  who.room  switch
     :_  state
-    =,  updates:view
     ?~  out
-      (playing turno:bc)
-    (wins [out turno:bc switch])
+      (playing:updates:view turno:bc)
+    (wins:updates:view [out turno:bc switch])
   ::  +switch:  sets next player allowed to perform game moves
   ::
   ++  switch
     ^-  @p
-    ?:(=(who:current me) ship:current me)
+    ?:(=(who:current our.bowl) ship:current our.bowl)
   ::  +stones: gets player's icons
   ::
   ++  stones
     ^-  [me=tape ze=tape]
     =/  p=player
-      (~(got by toers:current) me)
+      (~(got by toers:current) our.bowl)
     :-  (trip stone.p)
     ?:(=(stone.p %'O') "X" "O")
   --
 ::  +board-core: puts a new move on the board
 ::
 ++  board-core
-  =<  |_  [room=game-room pos=spot]
+  |^  |_  [room=game-room pos=position]
       ++  play
         ^-  [outcome board-game]
         =.  board.room  (~(put by board.room) [pos player])
@@ -519,7 +498,7 @@
       ++  turno   ^-(toe-turno [player pos])
       ++  out     (outcome-check player board.room)
       --
-  |%
+  ::
   ++  outcome-check
     |=  [per=player =board-game]
     ^-  outcome
@@ -533,10 +512,10 @@
     |=  [per=player =board-game]
     ^-  ?
     %+  lien  winning-rows
-    |=  a=(list spot)
+    |=  a=(list position)
     ^-  ?
     %+  levy  a
-    |=  b=spot
+    |=  b=position
     =/  p=(unit player)  (~(get by board-game) b)
     ?~(p %.n =(stone.per stone.u.p))
   ::
@@ -544,7 +523,7 @@
     |=(=board-game =(~(wyt in board-game) 9))
   ::
   ++  winning-rows
-    ^-  (list (list spot))
+    ^-  (list (list position))
     :~  ~[[%1 %1] [%2 %1] [%3 %1]]
         ~[[%1 %2] [%2 %2] [%3 %2]]
         ~[[%1 %3] [%2 %3] [%3 %3]]
@@ -558,28 +537,20 @@
 ::  +connect: handles subscriptions and updates
 ::
 ++  connect
-  |=  pax=path
-  ^-  (quip card _state)
-  ~&  who-connect+pax
-  |^  ?+    pax  ~|([%peer-toe-strange pax] !!)
-          [%sole *]           sole
-          [%toetile ~]        tile
-          [%room ^]           (room i.t.pax)
-          [%http-response *]  [~ state]
-      ==
+  |%
   ::  +tile
   ::
   ++  tile
     ^-  (quip card _state)
-    ~&  tiled+src.bol
+    ~&  tiled+src.bowl
     :_  state
     [%give %fact ~ %json !>(*json)]~
   ::  +sole: innitializes the console's state
   ::
   ++  sole
     ^-  (quip card _state)
-    ~&  sole+[me src.bol]
-    ?.  (team:title me src.bol)  ~|([%strange-sole src.bol] !!)
+    ~&  sole+[our.bowl src.bowl]
+    ?.  (team:title our.bowl src.bowl)  ~|([%strange-sole src.bowl] !!)
     :_  state(state.cli *sole-share)
     =,  co:view
     [(send mor+~[clear welcome wopr grid shall-we (prompt choose)])]~
@@ -588,15 +559,14 @@
   ++  room
     |=  id=@t
     ^-  (quip card _state)
-    =,  room-core
     ?~  rooms  [~ state]
     =/  ze=@p  (slav %p id)
-    ~&  [ze ship:current]
-    ?.  =(ze ship:current)  [~ state]
+    ~&  [ze ship:current:room-core]
+    ?.  =(ze ship:current:room-core)  [~ state]
     ?:  =(%wait game)
-      (join ze)
+      (join:room-core ze)
     ?.  =(%play game)  [~ state]
-    (start ze)
+    (start:room-core ze)
   --
 ::  +view
 ::  TODO: please make me into a %view app!
@@ -632,10 +602,9 @@
     ++  playing
       |=  move=toe-turno
       ^-  (list card)
-      =/  [ze=@p who=@p]   =,  current:room-core
-        [ship who]
+      =/  [ze=@p who=@p]  [ship who]:current:room-core
       :~  ::  If the move originated in the frontend, this is redundant
-          ::  so this move is ignored on the frontend (via %next)
+          ::  so this is ignored on the frontend upon receiving (via %next)
           ::
           %-  send:fe  ^-  (list [@t json])
           :~  [%status s+'play']
@@ -645,13 +614,8 @@
           ==
         ::
           =,  co
-          %-  send  ^-  sole-effect
-          :~  %mor
-              grid
-              %-  prompt
-              %-  dial
-              [ze stones:room-core ?:(=(who me) "<-" "->")]
-      ==  ==
+          (send mor+~[grid (prompt (dial ze))])
+      ==
     ::
     ++  wins
       |=  [out=outcome move=toe-turno winner=@p]
@@ -660,10 +624,12 @@
     ::
     ++  notify
       |=  guest=@p
+      ^-  (list card)
       :_  ~
       (send:co klr+~[[[```%b] " [ {<guest>} wants to play ]"]])
     ::
     ++  not-allowed
+      ^-  (list card)
       :~  (send:co frowned-upon)
         ::
           %-  send:fe
@@ -681,10 +647,8 @@
       |=  =inbound-request:eyre
       ^-  simple-payload:http
       =/  request-line  (parse-request-line url.request.inbound-request)
-      ~&  request-line
       ?+  request-line  not-found:gen
             [[[~ %js] [%'~toe' %js %tile ~]] ~]
-          :: ~&  "loading..."
           (js-response:gen tile-js)
       ==
     ::
@@ -698,14 +662,18 @@
         [~ state]
       =/  object=(map @t json)  +.jon
       =/  data=json  (~(got by object) 'data')
-      =-  ~(action game-loop (tufa -))
-      ^-  (list @c)
-      ?+    -.data  !!
-        %a  =-  (tuba "{-<}/{->}")
-            =-  :-  (scow %u (snag 0 -))
-                (scow %u (snag 1 -))
-            ((ar:dejs ni:dejs) data)
-        %s  (tuba (trip (so:dejs data)))
+      %~  action  game-loop
+      =,  dejs:format
+      ?+  -.data  !!
+        %a  =;  [x=tape y=tape]  "{x}/{y}"
+            %.  data
+            =-  (cu - (ar ni))
+            |=  coords=(list @ud)
+            ?>  ?=([@ud @ud ~] coords)
+            ^-  [tape tape]
+            [(scow %ud i.coords) (scow %ud i.t.coords)]
+      ::
+        %s  (trip (so data))
       ==
     ::  +send: new data to the frontend
     ::
@@ -748,7 +716,7 @@
         |=  [out=outcome move=toe-turno winner=@p]
         ^-  card
         %-  send  ^-  (list [@t json])
-        :~  [%status s+'replay']
+        :~  [%status s+'rematch']
             [%winner ?:(=((need out) %tie) s+'tie' s+(scot %p winner))]
             [%stone s+`@t`stone.per.move]
             [%move a+~[n+(scot %u -.spo.move) n+(scot %u +.spo.move)]]
@@ -774,18 +742,20 @@
       [%det edit]
     ::
     ++  dial
-      |=  [guest=ship stones=[me=tape ze=tape] arrow=tape]
+      |=  guest=ship
+      =/  arrow=tape
+        ?:(=(who:current:room-core our.bowl) "<-" "->")
       ^-  styx
       ::  +cite:title compresses the ship's name if we are dealing with a comet
       ::
       :~  [[~ ~ ~] " | "]
-          [[~ ~ ~] "{(cite:title me)}"]
+          [[~ ~ ~] "{(cite:title our.bowl)}"]
           [[~ ~ ~] ":["]
-          [[```%g] "{me.stones}"]
+          [[```%g] me:stones:room-core]
           [[~ ~ ~] "] {arrow} "]
           [[~ ~ ~] "{(cite:title guest)}"]
           [[~ ~ ~] ":["]
-          [[```%r] "{ze.stones}"]
+          [[```%r] ze:stones:room-core]
           [[~ ~ ~] "] |  "]
       ==
     ::
@@ -870,8 +840,7 @@
       =/  board=board-game  ?~(active ~ board:current:room-core)
       :-  %klr
       |-  ^-  styx
-      =/  symbol=(unit player)
-        (~(get by board) [row col])
+      =/  symbol=(unit player)  (~(get by board) (position [row col]))
       :-  ?:  =(col %1)
             [[~ ~ ~] "    "]
           [[~ ~ ~] "| "]
@@ -892,24 +861,18 @@
       |%
       ++  playing
         |=  guest=@p
-        %-  send  ^-  sole-effect
-        :~  %mor
-            instruct
-            %-  prompt  =,  room-core
-            (dial [guest stones ?:(=(who:current me) "<-" "->")])
-        ==
+        ^-  card
+        (send mor+~[instruct (prompt (dial guest))])
       ::
       ++  waiting
         |=  guest=@p
+        ^-  card
         (send mor+~[(prompt "{^waiting}{<guest>} {abort} | ")])
       ::
       ++  confirm
         |=  guest=@p
         ^-  card
-        %-  send  ^-  sole-effect
-        :~  %mor
-            (prompt "{^confirm}{(cite:title guest)} (Y/N)? | ")
-        ==
+        (send mor+~[(prompt "{^confirm}{(cite:title guest)} (Y/N)? | ")])
       ::
       ++  wins
         |=  [out=outcome winner=@p]

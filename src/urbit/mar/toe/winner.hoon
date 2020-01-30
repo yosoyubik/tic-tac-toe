@@ -1,7 +1,5 @@
-::  /hoon/winner/toe/mar
-::
 /-    *toe
-::::  A minimal winner mark
+::  A minimal winner mark
 ::
 |_  toe-winner
 ++  grab
