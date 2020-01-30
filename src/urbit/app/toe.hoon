@@ -1,11 +1,5 @@
 ::  Tic-Tac-Toe
 ::
-::  ~norsyr, the currently-canonical way to do that is to have the subscriber
-::  add a unique id into the subscription path
-::
-::  i.e in tic tac toe, you could say, players subscribe on a game session id,
-::  and then you just do per-game updates
-::
 /-  *sole,  *toe
 /+  default-agent, sole-lib=sole, *server, *toe, verb
 ::
@@ -67,7 +61,6 @@
       =.  state  wipe:tc
       :_  this
       :~  [%pass /bind/toe %arvo %e %connect [~ /'~toe'] %toe]
-          ~&  poking-launch+our.bowl
           :*  %pass  /launch/toe  %agent  [our.bowl %launch]  %poke
               %launch-action  !>([%toe /toetile '/~toe/js/tile.js'])
       ==  ==
@@ -90,25 +83,19 @@
           handle-http-request:fe:view:tc
         ::
             %json
-           ~&  poked+[mark vase src.bowl]
           (poke-json:fe:view:tc !<(json vase))
         ::
             %sole-action
           (poke-sole-action:co:view:tc !<(sole-action vase))
         ::
             %toe-player
-           ~&  poked+[mark vase src.bowl]
           (receive:room-core:tc src.bowl)
         ::
             %toe-cancel
-           ~&  poked+[mark vase src.bowl]
           ?~  rooms  `state
           (cancel:room-core:tc src.bowl)
         ::
             %urbit
-           ~&  poked+[mark vase src.bowl]
-          ::  TODO: Don't block when receiving a request to play
-          ::
           (receive:room-core:tc !<(@p vase))
         ==
       [cards this]
@@ -116,7 +103,6 @@
     ++  on-watch
       |=  =path
       ^-  (quip card _this)
-      ~&  [watch+path src.bowl]
       =^  cards  state
         ?+    path  ~|([%peer-toe-strange path] !!)
           [%sole *]           sole:connect:tc
@@ -128,17 +114,15 @@
     ::
     ++  on-leave
       |=  =path
-      ~&  leaving+[path src.bowl]
       `this
     ::
     ++  on-peek   on-peek:def
     ++  on-agent
       |=  [=wire =sign:agent:gall]
       ^-  (quip card _this)
-      ~&  connected+[wire src.bowl sign]
       ?-    -.sign
           %poke-ack   (on-agent:def wire sign)
-          %watch-ack  ~&  "conf {<wire>}"  (on-agent:def wire sign)
+          %watch-ack  (on-agent:def wire sign)
         ::
           %kick
         =^  cards  state
@@ -161,7 +145,6 @@
     ++  on-arvo
       |=  [=wire =sign-arvo]
       ^-  (quip card:agent:gall _this)
-      ~&  arvoed+[wire src.bowl]
       ?:  ?=(%bound +<.sign-arvo)
         [~ this]
       (on-arvo:def wire sign-arvo)
@@ -263,7 +246,6 @@
   ++  create
     |=  [guest=@p =game-state]
     ^-  _state
-    ~&  create+guest
     state(rooms (snoc rooms [guest ~]), game game-state)
   ::  %invite: sends an invite to play with opponent (e.g. ~zod)
   ::
@@ -279,7 +261,6 @@
   ++  receive
     |=  guest=@p
     ^-  (quip card _state)
-    ~&  active+active
     =/  enqueue
       :-  (receive:updates:view guest)
       (create [guest ?~(active %confirm game)])
@@ -303,7 +284,6 @@
       ?:(=(%.y ^next) our.bowl ze)
     =/  request=(list card)
       ?.  =(game %rematch)
-        ~&  in-confirm+[ze /play]
         [%pass /play %agent [ze %toe] %watch /room/(scot %p our.bowl)]~
       ::  %next is set if our opponent already confirmed the replay
       ::
@@ -320,9 +300,6 @@
   ::
   ++  close
     |=  kicked=?
-    ~&  kicked
-    ~&  wex+wex.bowl
-    ~&  sup+sup.bowl
     ^-  (quip card _state)
     ?~  rooms
        =.  rooms  ~
@@ -333,7 +310,6 @@
         ?:  =(kicked %.y)  ~
         [%pass /cancel %agent [ze %toe] %poke %toe-cancel !>(%bye)]~
       ?:  =(kicked %.y)  ~
-      ~&  in-close+[ze /leave/play]
       :~  ::  we leave our subscription
           ::
           [%pass /play %agent [ze %toe] %leave ~]
@@ -358,8 +334,6 @@
   ::
   ++  cancel
     |=  guest=@p
-    ~&  "cancelled"
-    ~&  [guest ship:current]
     ?:  =(guest ship:current)
       (close %.y)
     ::  we get a cancel from someone waiting in the queue
@@ -382,7 +356,6 @@
   ++  join
     |=  ze=@p
     ^-  (quip card _state)
-    ~&  "{<ze>} joined"
     ?>  ?=(^ rooms)
     ::  toers.rooms needs to be modifed before we send the new state
     ::    since create dial can't access a future state
@@ -399,14 +372,12 @@
     :_  state(game %play)
     :~  (playing:updates:co:view ze)
         (playing:updates:fe:view ze)
-        ~&  in-join+[ze /play]
         [%pass /play %agent [ze %toe] %watch /room/(scot %p our.bowl)]
     ==
   ::  +start: the requester subscribes back and the game starts
   ++  start
     |=  ze=@p
     ^-  (quip card _state)
-    ~&  "{<ze>} is ready. start!"
     =.  active  `ze
     :_  state
     ~[(playing:updates:co:view ze) (playing:updates:fe:view ze)]
@@ -542,14 +513,12 @@
   ::
   ++  tile
     ^-  (quip card _state)
-    ~&  tiled+src.bowl
     :_  state
     [%give %fact ~ %json !>(*json)]~
   ::  +sole: innitializes the console's state
   ::
   ++  sole
     ^-  (quip card _state)
-    ~&  sole+[our.bowl src.bowl]
     ?.  (team:title our.bowl src.bowl)  ~|([%strange-sole src.bowl] !!)
     :_  state(state.cli *sole-share)
     =,  co:view
@@ -561,7 +530,6 @@
     ^-  (quip card _state)
     ?~  rooms  [~ state]
     =/  ze=@p  (slav %p id)
-    ~&  [ze ship:current:room-core]
     ?.  =(ze ship:current:room-core)  [~ state]
     ?:  =(%wait game)
       (join:room-core ze)
@@ -655,7 +623,6 @@
     ++  poke-json
       |=  jon=json
       ^-  (quip card _state)
-      ~&  jon
       ?.  ?=(%o -.jon)
         ::  ignores non-object json
         ::
