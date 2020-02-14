@@ -1,6 +1,6 @@
 # TIC-TAC-TOE for Urbit
 
-[![Alternate Text](toe.png)](https://youtu.be/cKofR65sTHM "TIC-TAC-TOE for Urbit")
+[![Header](toe.png)](https://youtu.be/cKofR65sTHM "TIC-TAC-TOE for Urbit")
 
 
 ## Features
@@ -17,21 +17,32 @@
 
 In order to run your application on your ship, you will need Urbit v.0.8.0 or higher. On your Urbit ship, if you haven't already, mount your pier to Unix with `|mount %`.
 
+Then you need to add the path to you urbit's pier in .urbitrc. The file is not provided by this repo so you need to create it manually:
+
+```
+module.exports = {
+  URBIT_PIERS: [
+    "PATH/TO/YOUR/PIER",
+  ]
+};
+
+```
+
 You have two options to mount the game into your pier:
 
 - ##### `npm run build`
 
-This builds your application and copies it into your Urbit ship's desk. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
+This builds your application and copies it into your Urbit ship's desk. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronize your changes.
 
 - ##### `npm run serve`
 
-Builds the application and copies it into your Urbit ship's desk, watching for changes. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronise your changes.
+Builds the application and copies it into your Urbit ship's desk, watching for changes. In your Urbit (v.0.8.0 or higher) `|commit %home` (or `%your-desk-name`) to synchronize your changes.
 
 When you make changes, the `urbit` directory will update with the compiled application and, if you're running `npm run serve`, it will automatically copy itself to your Urbit ship when you save your changes (more information on that below).
 
 ## Playing
 
-![Alternate Text](tie.gif)
+![Playing](tie.gif)
 
 In your urbit's Dojo, run the command:
 
@@ -51,12 +62,7 @@ The list of commands are:
     - `| ~zod wins! continue? (Y/N) |`
     - `| waiting for ~zod (!=quit) |`
 
-A web frontend is also available on your Urbit's Lanscape.
+A web frontend is also available on your Urbit's Landscape Interface.
 
 ## In Progress
-- Code refactoring (frontend+backend)
-- Follow [code style](https://urbit.org/docs/learn/arvo/style/)
-- Remove old three/four letter variable names
-- Use Hoon idioms
-- Replace two-way subscription queue
-- Heavy frontend refactor (follow React's best practices)
+- Heavy frontend refactor

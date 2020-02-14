@@ -304,7 +304,6 @@ export default class toeTile extends Component {
               }
             }
             if (data.status === "rematch") {
-              console.log("rematching");
               game = "rematch";
               // Game has ended, so we make both players unable to click on the board
               amNext = false;
@@ -313,7 +312,6 @@ export default class toeTile extends Component {
               }
               if ('winner' in data) {
                 winner = data.winner.replace('~', '');
-                console.log(winner);
                 if (winner === ship) {
                   result = <p className="small f7 lh-copy green">You win!</p>;
                 } else if (winner === "tie") {
